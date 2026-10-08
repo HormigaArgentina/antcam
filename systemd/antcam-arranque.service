@@ -1,0 +1,14 @@
+[Unit]
+Description=AntCam - ajustes al encender (nombre, antcam.txt)
+After=NetworkManager.service local-fs.target
+Wants=NetworkManager.service
+Before=antcam-grabador.service antcam-web.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/antcam
+ExecStart=/usr/bin/python3 -m antcam.arranque
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target

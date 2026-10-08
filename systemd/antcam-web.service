@@ -1,0 +1,15 @@
+[Unit]
+Description=AntCam - pagina web, WiFi automatico y avisos
+After=NetworkManager.service
+Wants=NetworkManager.service
+StartLimitIntervalSec=0
+
+[Service]
+WorkingDirectory=/opt/antcam
+ExecStart=/usr/bin/python3 -m antcam.web
+Environment=PYTHONUNBUFFERED=1
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

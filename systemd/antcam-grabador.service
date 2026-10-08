@@ -1,0 +1,19 @@
+[Unit]
+Description=AntCam - grabacion de video
+After=local-fs.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=notify
+NotifyAccess=main
+WorkingDirectory=/opt/antcam
+ExecStart=/usr/bin/python3 -m antcam.recorder
+Environment=PYTHONUNBUFFERED=1
+Restart=always
+RestartSec=5
+# si el grabador se traba (la camara deja de entregar imagenes), systemd lo reinicia
+WatchdogSec=60
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

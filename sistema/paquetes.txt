@@ -1,0 +1,2 @@
+python3-picamera2 python3-av python3-flask python3-numpy python3-pil python3-gpiozero
+ffmpeg network-manager dnsmasq-base avahi-daemon iw exfatprogs ntfs-3g

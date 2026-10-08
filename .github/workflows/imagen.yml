@@ -1,0 +1,72 @@
+# Fabrica la imagen lista para grabar en la tarjeta SD.
+# - Al subir una etiqueta de versión (ej. v2.0.0) la publica en "Releases".
+# - También se puede lanzar a mano desde la pestaña Actions ("Run workflow").
+name: Imagen AntCam
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  imagen:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Preparar la etapa AntCam
+        run: |
+          F=imagen/stage-antcam/00-antcam
+          mkdir -p "$F/files/repo"
+          cp -r antcam systemd sistema "$F/files/repo/"
+          cp sistema/paquetes.txt "$F/00-packages-nr"
+
+      - name: Construir la imagen (pi-gen)
+        id: build
+        uses: usimd/pi-gen-action@v1
+        with:
+          image-name: antcam-${{ github.ref_type == 'tag' && github.ref_name || format('prueba-{0}', github.run_number) }}
+          release: trixie
+          stage-list: stage0 stage1 stage2 ./imagen/stage-antcam
+          pi-gen-release: AntCam
+          compression: xz
+          compression-level: 6
+          hostname: antcam
+          username: antcam
+          password: hormigas
+          disable-first-boot-user-rename: 1
+          enable-ssh: 1
+          locale: es_AR.UTF-8
+          timezone: America/Argentina/Buenos_Aires
+          keyboard-keymap: latam
+          keyboard-layout: Spanish (Latin American)
+          wpa-country: AR
+          enable-cloud-init: 0
+          increase-runner-disk-size: true
+
+      - name: Guardar como artefacto (pruebas)
+        uses: actions/upload-artifact@v4
+        with:
+          name: imagen-antcam
+          path: ${{ steps.build.outputs.image-path }}
+          retention-days: 14
+          compression-level: 0
+
+      - name: Publicar en Releases
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.build.outputs.image-path }}
+          body: |
+            Imagen lista de AntCam para Raspberry Pi 3B+ / 3B / 4 / Zero 2 W con cámara v2.
+
+            1. Descargá el archivo `.img.xz` de abajo.
+            2. Raspberry Pi Imager → Dispositivo: tu Raspberry → Sistema operativo: "Usar personalizado" → elegí el archivo → tu tarjeta → Escribir. Si pregunta por personalizar, respondé "No".
+            3. (Opcional) Con la tarjeta todavía en la PC, abrí la unidad "bootfs" y completá `antcam.txt` con el Bloc de notas.
+            4. Poné la tarjeta, la cámara y el pendrive en la Raspberry y enchufala. A los 2–3 minutos aparece la WiFi "AntCam-XXXX" (clave hormigas2026) y ya está grabando.
+
+            Acceso de mantenimiento por SSH: usuario `antcam`, clave `hormigas`.

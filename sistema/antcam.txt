@@ -1,0 +1,24 @@
+# ===================== AJUSTES DE ANTCAM =====================
+# Este archivo se puede editar desde Windows con el Bloc de notas
+# (poné la tarjeta en la PC, abrí la unidad "bootfs").
+# Completá lo que quieras después del "=" y guardá.
+# Se aplica al encender el equipo, solo si cambiaste algo.
+# Todo esto también se puede hacer después desde la página.
+
+# Nombre del equipo. Vacío = se elige solo (ej. AntCam-3F2A)
+nombre=
+
+# Redes WiFi con internet (oficina, casa, hotspot del celular).
+# Sirven para los avisos y para entrar a la página desde la PC.
+wifi_nombre=
+wifi_clave=
+wifi_nombre2=
+wifi_clave2=
+
+# Clave de la red WiFi propia del equipo (mínimo 8 caracteres).
+# Vacío = hormigas2026
+red_propia_clave=
+
+# Avisos por Telegram (opcional)
+telegram_token=
+telegram_chat_id=

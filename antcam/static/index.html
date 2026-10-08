@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AntCam</title>
+<style>
+:root{
+  --bg:#f4efe6; --card:#fffdf9; --ink:#1f1a14; --muted:#6d6457; --line:#e4dccd;
+  --accent:#7a4f1d; --accent-ink:#fff;
+  --ok:#17803d; --ok-bg:#e3f4e8; --warn:#a15c00; --warn-bg:#fdf0d9;
+  --bad:#c0291f; --bad-bg:#fde6e3; --info:#2c5d8a; --info-bg:#e5eef7;
+  --r:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,sans-serif;-webkit-text-size-adjust:100%}
+header{position:sticky;top:0;z-index:5;background:var(--ink);color:#fff;
+  padding:12px 16px calc(12px);display:flex;align-items:center;gap:10px}
+header h1{font-size:18px;margin:0;font-weight:700;letter-spacing:.2px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header .dot{width:12px;height:12px;border-radius:50%;background:#888;flex:none}
+header .dot.ok{background:#3ddc6f;animation:pulse 1.6s infinite}
+header .dot.warn{background:#ffb02e}
+header .dot.bad{background:#ff5544;animation:pulse .6s infinite}
+@keyframes pulse{50%{opacity:.35}}
+header small{opacity:.75;font-size:13px}
+main{max-width:760px;margin:0 auto;padding:14px 14px 96px}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:5;background:var(--card);border-top:1px solid var(--line);
+  display:flex;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;background:none;border:0;padding:9px 2px 10px;font:inherit;font-size:12px;color:var(--muted);
+  display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
+nav button svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+nav button.on{color:var(--accent);font-weight:700}
+section{display:none}
+section.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px}
+.card h2{font-size:15px;margin:0 0 10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+.hero{border-width:2px;padding:18px}
+.hero .big{font-size:26px;font-weight:800;line-height:1.15}
+.hero .sub{margin-top:4px;color:var(--muted)}
+.hero.ok{background:var(--ok-bg);border-color:var(--ok)} .hero.ok .big{color:var(--ok)}
+.hero.warn{background:var(--warn-bg);border-color:var(--warn)} .hero.warn .big{color:var(--warn)}
+.hero.bad{background:var(--bad-bg);border-color:var(--bad)} .hero.bad .big{color:var(--bad)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.kv{background:var(--bg);border-radius:10px;padding:10px 12px}
+.kv b{display:block;font-size:20px}
+.kv span{font-size:13px;color:var(--muted)}
+.btn{appearance:none;border:2px solid var(--accent);background:var(--accent);color:var(--accent-ink);
+  font:inherit;font-weight:700;padding:12px 16px;border-radius:12px;cursor:pointer;min-height:48px}
+.btn.alt{background:transparent;color:var(--accent)}
+.btn.bad{background:var(--bad);border-color:var(--bad)}
+.btn.small{padding:6px 12px;min-height:36px;font-size:14px}
+.btn.wide{width:100%}
+.btn:disabled{opacity:.5}
+label{display:block;font-weight:600;margin:12px 0 6px}
+.hint{font-size:14px;color:var(--muted);margin:4px 0 0}
+input,select{width:100%;font:inherit;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);min-height:46px}
+input[type=checkbox]{width:24px;height:24px;min-height:0;accent-color:var(--accent);flex:none}
+.check{display:flex;gap:12px;align-items:flex-start;margin:14px 0;font-weight:600}
+.check .hint{font-weight:400}
+.drive{border:1.5px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+.drive.cur{border-color:var(--ok);background:var(--ok-bg)}
+.bar{height:10px;background:var(--line);border-radius:6px;overflow:hidden;margin:8px 0 4px}
+.bar i{display:block;height:100%;background:var(--accent)}
+.tag{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:20px;background:var(--line);color:var(--ink)}
+.tag.ok{background:var(--ok);color:#fff}.tag.warn{background:var(--warn);color:#fff}.tag.bad{background:var(--bad);color:#fff}
+.notice{border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:15px}
+.notice.warn{background:var(--warn-bg);border:1.5px solid var(--warn)}
+.notice.info{background:var(--info-bg);border:1.5px solid var(--info)}
+.notice.bad{background:var(--bad-bg);border:1.5px solid var(--bad)}
+.stage{position:relative;background:#111;border-radius:12px;overflow:hidden;touch-action:none;user-select:none}
+.stage img{display:block;width:100%;height:auto;min-height:120px}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%}
+.empty{color:#bbb;text-align:center;padding:60px 10px}
+.list{list-style:none;margin:0;padding:0}
+.list li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--line)}
+.list li:last-child{border:0}
+.ev{font-size:14px;padding:8px 0;border-bottom:1px solid var(--line)}
+.ev time{color:var(--muted);font-variant-numeric:tabular-nums;margin-right:6px}
+.ev.aviso{color:var(--warn)}.ev.error{color:var(--bad)}
+.steps{padding-left:20px;margin:6px 0}.steps li{margin:4px 0}
+code{background:var(--bg);padding:1px 5px;border-radius:5px;font-size:.92em;word-break:break-all}
+#toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;
+  font-weight:600;opacity:0;transition:.25s;pointer-events:none;z-index:9;max-width:90vw;text-align:center}
+#toast.on{opacity:1}
+.mono{font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<header>
+  <span class="dot" id="hdot"></span>
+  <h1 id="hname">AntCam</h1>
+  <small id="hclock" class="mono"></small>
+</header>
+
+<main>
+<!-- ============================ ESTADO -->
+<section id="s-estado" class="on">
+  <div id="notices"></div>
+  <div class="card hero" id="hero">
+    <div class="big" id="hero-t">Conectando…</div>
+    <div class="sub" id="hero-s"></div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn" id="b-rec">…</button>
+      <button class="btn alt" id="b-ver">Ver cámara</button>
+    </div>
+  </div>
+
+  <div class="card" id="live-card" hidden>
+    <h2>Lo que se está grabando</h2>
+    <div class="stage"><img id="live" alt=""></div>
+  </div>
+
+  <div class="card">
+    <h2>Grabación</h2>
+    <div class="grid">
+      <div class="kv"><b id="k-res">–</b><span>tamaño del video</span></div>
+      <div class="kv"><b id="k-fps">–</b><span>cuadros por segundo</span></div>
+      <div class="kv"><b id="k-hoy">–</b><span>fragmentos hoy</span></div>
+      <div class="kv"><b id="k-dias">–</b><span>de espacio restante</span></div>
+    </div>
+    <p class="hint" id="k-frag"></p>
+  </div>
+
+  <div class="card">
+    <h2>Pendrives</h2>
+    <div id="drives"></div>
+    <p class="hint">Antes de sacar un pendrive tocá <b>Quitar</b>. Si hay más de uno, cuando se llena uno sigue en el otro sin cortar.</p>
+  </div>
+
+  <div class="card">
+    <h2>Equipo</h2>
+    <div class="grid">
+      <div class="kv"><b id="k-temp">–</b><span>temperatura CPU</span></div>
+      <div class="kv"><b id="k-up">–</b><span>encendido hace</span></div>
+      <div class="kv"><b id="k-red">–</b><span id="k-red2">WiFi</span></div>
+      <div class="kv"><b id="k-volt">–</b><span>alimentación</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ ENCUADRE -->
+<section id="s-encuadre">
+  <div class="card" id="fr-off">
+    <h2>Elegir la zona a grabar</h2>
+    <p>Ves la imagen completa de la cámara y marcás con el dedo el rectángulo del camino. Solo se graba esa zona: los videos ocupan menos y el camino se ve con más detalle.</p>
+    <div class="notice warn">Mientras encuadrás la grabación queda en pausa. Si te olvidás, vuelve a grabar sola a los 10 minutos.</div>
+    <button class="btn wide" id="b-fr-start">Empezar a encuadrar</button>
+  </div>
+  <div id="fr-on" hidden>
+    <div class="card">
+      <h2>Arrastrá sobre la imagen para marcar la zona</h2>
+      <div class="stage" id="stage"><img id="frimg" alt=""><canvas id="cv"></canvas></div>
+      <p class="hint" id="fr-info"></p>
+      <div class="row" style="margin-top:10px">
+        <button class="btn alt small" id="b-full">Todo el cuadro</button>
+        <label class="check" style="margin:0"><input type="checkbox" id="rot"> Imagen dada vuelta (rotar 180°)</label>
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn" id="b-fr-save" style="flex:2">Guardar y grabar</button>
+      <button class="btn alt" id="b-fr-cancel" style="flex:1">Cancelar</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ VIDEO -->
+<section id="s-video">
+  <div class="card">
+    <h2>Calidad del video</h2>
+    <label for="c-ancho">Ancho del video</label>
+    <select id="c-ancho"></select>
+    <p class="hint">El alto sale de la forma de la zona elegida. Máximo 1920×1080.</p>
+    <label for="c-fps">Cuadros por segundo</label>
+    <select id="c-fps"></select>
+    <label for="c-bitrate">Calidad (tasa de grabación)</label>
+    <select id="c-bitrate"></select>
+    <p class="hint" id="est"></p>
+    <label for="c-seg">Largo de cada fragmento</label>
+    <select id="c-seg"></select>
+    <label class="check"><input type="checkbox" id="c-align"><span>Cortar en horas redondas<br><span class="hint">Los fragmentos empiezan a las 08:00, 08:30… Más fácil para analizar.</span></span></label>
+    <label class="check"><input type="checkbox" id="c-exp"><span>Fijar exposición<br><span class="hint">Congela brillo y color a los 10 s. Útil con luz constante para que el seguimiento no vea cambios.</span></span></label>
+    <button class="btn wide" id="b-save-video">Guardar</button>
+  </div>
+  <div class="card">
+    <h2>Prueba de calidad</h2>
+    <p>Graba 3 videos de 1 minuto a 2, 3 y 5 Mbps en la carpeta <code>pruebas_calidad</code> del pendrive. Comparalos en la PC para elegir la calidad mínima que sirve para contar.</p>
+    <button class="btn alt wide" id="b-test">Hacer prueba (3 min)</button>
+  </div>
+  <div class="card">
+    <h2>Nombre del equipo</h2>
+    <input id="c-nombre" maxlength="30">
+    <p class="hint">Se usa en los archivos, la carpeta del pendrive, la red propia y los avisos. Ej: AntCam-02.</p>
+    <button class="btn alt wide" id="b-save-name" style="margin-top:10px">Cambiar nombre</button>
+  </div>
+</section>
+
+<!-- ============================ CONEXIÓN -->
+<section id="s-red">
+  <div class="card">
+    <h2>WiFi</h2>
+    <div id="w-state"></div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn alt small" id="b-w-try">Buscar redes conocidas ahora</button>
+      <button class="btn alt small" id="b-w-ap">Pasar a red propia</button>
+    </div>
+    <p class="hint">Si no encuentra ninguna red conocida, el equipo crea su propia red WiFi. Cada <span id="w-int">15</span> min (si nadie está conectado) vuelve a buscar.</p>
+  </div>
+  <div class="card">
+    <h2>Redes conocidas</h2>
+    <ul class="list" id="w-known"></ul>
+    <label for="w-ssid">Agregar red</label>
+    <input id="w-ssid" list="w-vis" placeholder="Nombre de la red (SSID)">
+    <datalist id="w-vis"></datalist>
+    <input id="w-pass" type="password" placeholder="Clave (vacío si es abierta)" style="margin-top:8px">
+    <button class="btn wide" id="b-w-add" style="margin-top:10px">Guardar red</button>
+    <p class="hint">Tip: guardá el hotspot de tu celular. En el campo, si tu teléfono tiene datos, compartí internet y el equipo manda los avisos.</p>
+  </div>
+  <div class="card">
+    <h2>Red propia</h2>
+    <p class="hint">Nombre: <b id="ap-name"></b> · Se entra a <code>http://10.42.0.1</code></p>
+    <label for="ap-pass">Clave de la red propia</label>
+    <input id="ap-pass" minlength="8" maxlength="63">
+    <button class="btn alt wide" id="b-ap-save" style="margin-top:10px">Guardar clave</button>
+  </div>
+  <div class="card">
+    <h2>Avisos por Telegram</h2>
+    <div id="tg-state"></div>
+    <ol class="steps">
+      <li>En Telegram buscá <b>@BotFather</b>, mandale <code>/newbot</code> y seguí los pasos.</li>
+      <li>Te da un <b>token</b> (algo como <code>123456:ABC-DEF…</code>). Pegalo abajo.</li>
+      <li>Abrí el bot que creaste y mandale cualquier mensaje (por ej. "hola").</li>
+      <li>Tocá <b>Vincular</b>. (El equipo tiene que tener internet en ese momento.)</li>
+    </ol>
+    <label for="tg-token">Token del bot</label>
+    <input id="tg-token" autocomplete="off" placeholder="123456789:AA…">
+    <button class="btn wide" id="b-tg-link" style="margin-top:10px">Vincular</button>
+    <label for="tg-int">Mandar un resumen cada</label>
+    <select id="tg-int"><option value="1">1 hora</option><option value="3">3 horas</option><option value="6">6 horas</option><option value="12">12 horas</option><option value="24">24 horas</option></select>
+    <label class="check"><input type="checkbox" id="tg-foto"><span>Adjuntar una foto de la cámara</span></label>
+    <div class="row">
+      <button class="btn alt" id="b-tg-save" style="flex:1">Guardar</button>
+      <button class="btn alt" id="b-tg-test" style="flex:1">Enviar prueba</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ SISTEMA -->
+<section id="s-sis">
+  <div class="card">
+    <h2>Hora</h2>
+    <div id="t-state"></div>
+    <button class="btn alt wide" id="b-time" style="margin-top:10px">Poner la hora de este dispositivo</button>
+  </div>
+  <div class="card">
+    <h2>Registro de eventos</h2>
+    <label class="check" style="margin-top:0"><input type="checkbox" id="ev-all"><span>Mostrar también cada fragmento grabado</span></label>
+    <div id="events"></div>
+  </div>
+  <div class="card">
+    <h2>Clave de acceso a esta página</h2>
+    <p class="hint">Opcional. Útil si el equipo está en una red compartida (por ej. la de la facultad). Usuario: <code>antcam</code>.</p>
+    <input id="acc-pass" type="password" placeholder="Vacío = sin clave">
+    <button class="btn alt wide" id="b-acc" style="margin-top:10px">Guardar clave</button>
+  </div>
+  <div class="card">
+    <h2>Apagar / reiniciar</h2>
+    <p>Para desenchufar el equipo, apagalo primero desde acá: así se cierra bien el último video.</p>
+    <div class="row">
+      <button class="btn bad" id="b-off" style="flex:1">Apagar</button>
+      <button class="btn alt" id="b-reboot" style="flex:1">Reiniciar</button>
+    </div>
+    <p class="hint" id="ver"></p>
+  </div>
+</section>
+</main>
+
+<nav id="nav">
+  <button data-s="estado" class="on"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>Estado</button>
+  <button data-s="encuadre"><svg viewBox="0 0 24 24"><path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4"/><rect x="8" y="9" width="8" height="6"/></svg>Encuadre</button>
+  <button data-s="video"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/></svg>Video</button>
+  <button data-s="red"><svg viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19.5" r="1"/></svg>Conexión</button>
+  <button data-s="sis"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Sistema</button>
+</nav>
+<div id="toast"></div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+let ST = null, CFG = null, TAB = "estado", liveOn = false, frRoi = null, frDirty = false;
+
+/* ---------- utilidades ---------- */
+async function api(path, body) {
+  const opt = body === undefined ? {} : {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)};
+  const r = await fetch(path, opt);
+  let j = {};
+  try { j = await r.json(); } catch (e) {}
+  if (!r.ok || j.ok === false) throw new Error(j.error || ("Error " + r.status));
+  return j;
+}
+function toast(msg, ms) {
+  const t = $("toast"); t.textContent = msg; t.classList.add("on");
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("on"), ms || 2800);
+}
+async function act(btn, fn, okMsg) {
+  if (btn) btn.disabled = true;
+  try { const r = await fn(); if (okMsg) toast(okMsg); return r; }
+  catch (e) { toast("⚠️ " + e.message, 5000); }
+  finally { if (btn) btn.disabled = false; }
+}
+const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function dur(s) {
+  s = Math.max(0, Math.round(s || 0));
+  const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
+  return d ? `${d} d ${h} h` : h ? `${h} h ${m} min` : `${m} min`;
+}
+const hhmm = t => new Date(t * 1000).toLocaleTimeString("es-AR", {hour: "2-digit", minute: "2-digit"});
+const ddhh = t => new Date(t * 1000).toLocaleString("es-AR", {day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"});
+
+/* ---------- pestañas ---------- */
+$("nav").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  showTab(b.dataset.s);
+});
+function showTab(s) {
+  TAB = s;
+  document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b.dataset.s === s));
+  document.querySelectorAll("section").forEach(x => x.classList.toggle("on", x.id === "s-" + s));
+  if (s === "red") loadWifi(true);
+  if (s === "sis") loadEvents();
+  if (s === "video" || s === "red") fillConfig();
+  window.scrollTo(0, 0);
+}
+
+/* ---------- estado ---------- */
+const STATES = {
+  grabando: ["ok", "Grabando"], pausado: ["warn", "En pausa"], encuadre: ["warn", "Encuadrando"],
+  prueba: ["warn", "Prueba de calidad"], sin_espacio: ["bad", "Sin espacio"], error: ["bad", "Problema"],
+  iniciando: ["warn", "Iniciando…"]
+};
+async function poll() {
+  try {
+    ST = await api("/api/estado");
+    render();
+  } catch (e) {
+    $("hero").className = "card hero bad"; $("hero-t").textContent = "Sin conexión con el equipo";
+    $("hero-s").textContent = "Revisá que sigas conectado a su WiFi."; $("hdot").className = "dot bad";
+  }
+}
+function render() {
+  const g = ST.grabador, s = ST;
+  $("hname").textContent = s.nombre;
+  document.title = s.nombre;
+  $("hclock").textContent = new Date(s.hora.pi * 1000).toLocaleTimeString("es-AR", {hour: "2-digit", minute: "2-digit"});
+  let cls, title, sub = "";
+  if (!g || g.viejo) { cls = "bad"; title = "El grabador no responde"; sub = "Se reinicia solo en segundos. Si sigue así, reiniciá el equipo."; }
+  else {
+    [cls, title] = STATES[g.estado] || ["warn", g.estado];
+    sub = g.mensaje || "";
+    if (g.estado === "grabando" && g.fragmento_actual) sub = "Fragmento actual desde las " + hhmm(g.fragmento_actual.inicio) + " · " + g.fragmento_actual.mb + " MB";
+    if (g.estado === "encuadre" && g.encuadre_hasta) sub += ` (vuelve a grabar sola a las ${hhmm(g.encuadre_hasta)})`;
+  }
+  $("hero").className = "card hero " + cls; $("hero-t").textContent = title; $("hero-s").textContent = sub;
+  $("hdot").className = "dot " + cls;
+  const enabled = CFG ? CFG.grabacion.habilitada : true;
+  $("b-rec").textContent = enabled ? "Detener grabación" : "Iniciar grabación";
+  $("b-rec").className = enabled ? "btn alt" : "btn";
+
+  // avisos arriba
+  const n = [];
+  if (!s.hora.ntp && !s.hora.ajustada_celular && !s.hora.rtc)
+    n.push(["warn", "La hora del equipo no está verificada (no tiene internet ni reloj). Se ajusta sola al abrir esta página; si no, andá a Sistema → Hora."]);
+  if (g && g.sistema && g.sistema.baja_tension_ahora) n.push(["bad", "⚡ Baja tensión AHORA: la fuente o el regulador no alcanzan. Puede colgarse o perder cuadros."]);
+  if (g && g.camara && g.camara.error) n.push(["bad", "📷 " + g.camara.error]);
+  if (g && g.almacenamiento && !g.almacenamiento.pendrives.length) n.push(["bad", "💾 No hay pendrives conectados. Conectá uno (exFAT recomendado) y se usa solo."]);
+  $("notices").innerHTML = n.map(([c, t]) => `<div class="notice ${c}">${esc(t)}</div>`).join("");
+
+  if (g) {
+    const v = g.video || {};
+    $("k-res").textContent = v.tamano ? v.tamano.join("×") : "–";
+    $("k-fps").textContent = v.fps_actual != null && g.modo ? v.fps_actual : v.fps_config;
+    $("k-hoy").textContent = g.fragmentos_hoy;
+    const a = g.almacenamiento || {};
+    $("k-dias").textContent = a.dias_restantes == null ? "–" : (a.dias_restantes >= 1 ? a.dias_restantes.toFixed(1) + " días" : Math.round(a.dias_restantes * 24) + " h");
+    const lf = g.ultimo_fragmento;
+    $("k-frag").textContent = (lf ? `Último fragmento: ${lf.archivo.split("/").slice(-1)[0]} · ${Math.round(lf.duracion_s / 60)} min · ${lf.fps_medio} cuadros/s` : "") +
+      (g.cuadros_perdidos ? ` · ⚠️ ${g.cuadros_perdidos} cuadros perdidos (pendrive lento)` : "");
+    renderDrives(a.pendrives || []);
+    const sy = g.sistema || {};
+    $("k-temp").textContent = sy.temperatura ? Math.round(sy.temperatura) + " °C" : "–";
+    $("k-temp").style.color = sy.temperatura > 75 ? "var(--bad)" : "";
+    $("k-up").textContent = dur(sy.uptime_s);
+    $("k-volt").textContent = sy.baja_tension_ahora ? "Baja ⚠️" : sy.hubo_baja_tension ? "Hubo bajas" : "OK";
+    $("k-volt").style.color = sy.baja_tension_ahora ? "var(--bad)" : sy.hubo_baja_tension ? "var(--warn)" : "";
+  }
+  const r = s.red || {};
+  $("k-red").textContent = r.modo === "cliente" ? (r.internet ? "Con internet" : "Sin internet") : r.modo === "propia" ? "Red propia" : "Sin red";
+  $("k-red2").textContent = r.ssid ? "WiFi: " + r.ssid : "WiFi";
+
+  // pestaña encuadre
+  const fr = g && g.modo === "encuadre";
+  $("fr-off").hidden = fr; $("fr-on").hidden = !fr;
+  if (TAB === "red") renderWifiState();
+  if (TAB === "sis") renderTime();
+}
+function renderDrives(list) {
+  if (!list.length) { $("drives").innerHTML = '<p class="hint">Ninguno conectado.</p>'; return; }
+  const tagc = {ok: "ok", lleno: "warn", expulsado: "", error: "bad", solo_lectura: "bad"};
+  const tagt = {ok: "ok", lleno: "lleno", expulsado: "listo para quitar", error: "error", solo_lectura: "solo lectura"};
+  $("drives").innerHTML = list.map(d => {
+    const used = d.total_gb ? 100 - 100 * d.libre_gb / d.total_gb : 0;
+    const fatWarn = d.fs === "vfat" ? ' · <span style="color:var(--warn)">FAT32: conviene formatear en exFAT</span>' : "";
+    return `<div class="drive ${d.actual ? "cur" : ""}">
+      <div class="row" style="justify-content:space-between"><b>${esc(d.nombre)}${d.actual ? " · grabando acá" : ""}</b>
+      <span class="tag ${tagc[d.estado] || ""}">${tagt[d.estado] || d.estado}</span></div>
+      <div class="bar"><i style="width:${used.toFixed(0)}%"></i></div>
+      <div class="row" style="justify-content:space-between"><span class="hint" style="margin:0">${d.libre_gb} GB libres de ${d.total_gb} GB${fatWarn}</span>
+      ${d.estado !== "expulsado" ? `<button class="btn alt small" data-eject="${esc(d.id)}">Quitar</button>` : ""}</div></div>`;
+  }).join("");
+}
+$("drives").addEventListener("click", e => {
+  const b = e.target.closest("[data-eject]"); if (!b) return;
+  if (!confirm("¿Preparar este pendrive para sacarlo? Si es el que está grabando, el equipo sigue en otro (si hay).")) return;
+  act(b, () => api("/api/expulsar", {id: b.dataset.eject}), "Listo: en unos segundos se puede sacar");
+});
+$("b-rec").onclick = () => {
+  const on = !(CFG && CFG.grabacion.habilitada);
+  if (!on && !confirm("¿Detener la grabación? No va a grabar hasta que la vuelvas a iniciar (tampoco al reiniciar).")) return;
+  act($("b-rec"), async () => { await api("/api/grabar", {on}); await loadConfig(); poll(); }, on ? "Grabación iniciada" : "Grabación detenida");
+};
+$("b-ver").onclick = () => {
+  liveOn = !liveOn; $("live-card").hidden = !liveOn;
+  $("b-ver").textContent = liveOn ? "Ocultar cámara" : "Ver cámara";
+  if (liveOn) refreshImg($("live"), () => liveOn && TAB === "estado");
+};
+function refreshImg(img, keep) {
+  if (!keep()) return;
+  const n = new Image();
+  n.onload = () => { img.src = n.src; setTimeout(() => refreshImg(img, keep), 600); };
+  n.onerror = () => setTimeout(() => refreshImg(img, keep), 1500);
+  n.src = "/vista.jpg?t=" + Date.now();
+}
+
+/* ---------- configuración ---------- */
+async function loadConfig() { CFG = await api("/api/config"); }
+function opts(sel, list, val, fmt) {
+  $(sel).innerHTML = list.map(v => `<option value="${v}" ${v == val ? "selected" : ""}>${fmt ? fmt(v) : v}</option>`).join("");
+}
+function fillConfig() {
+  if (!CFG) return;
+  const g = CFG.grabacion;
+  opts("c-ancho", [640, 960, 1280, 1600, 1920], g.ancho, v => v + " px");
+  opts("c-fps", [10, 15, 20, 25, 30], g.fps);
+  opts("c-bitrate", [1, 1.5, 2, 3, 4, 5, 6, 8, 10], g.bitrate_mbps, v => v + " Mbps" + (v == 3 ? " (recomendado)" : ""));
+  opts("c-seg", [5, 10, 15, 30, 60], g.segmento_min, v => v + " minutos");
+  $("c-align").checked = g.alinear_reloj; $("c-exp").checked = g.fijar_exposicion;
+  $("c-nombre").value = CFG.nombre;
+  $("ap-name").textContent = CFG.nombre; $("ap-pass").value = CFG.wifi.ap_clave;
+  $("w-int").textContent = CFG.wifi.reintento_min;
+  $("tg-token").value = CFG.avisos.telegram_token; $("tg-int").value = CFG.avisos.intervalo_h;
+  $("tg-foto").checked = CFG.avisos.foto;
+  estimate();
+}
+function estimate() {
+  const mbps = parseFloat($("c-bitrate").value);
+  const gbDay = mbps / 8 * 86400 / 1000;
+  let txt = `≈ ${gbDay.toFixed(0)} GB por día como máximo (con la escena quieta suele ocupar menos).`;
+  const a = ST && ST.grabador && ST.grabador.almacenamiento;
+  if (a && a.libre_total_gb) txt += ` Con los pendrives conectados (${a.libre_total_gb} GB libres) alcanza para ~${(a.libre_total_gb / gbDay).toFixed(1)} días.`;
+  $("est").textContent = txt;
+}
+$("c-bitrate").onchange = estimate;
+$("b-save-video").onclick = () => act($("b-save-video"), async () => {
+  await api("/api/config", {grabacion: {ancho: +$("c-ancho").value, fps: +$("c-fps").value, bitrate_mbps: +$("c-bitrate").value,
+    segmento_min: +$("c-seg").value, alinear_reloj: $("c-align").checked, fijar_exposicion: $("c-exp").checked}});
+  await loadConfig();
+}, "Guardado. El video se reinicia con la nueva configuración.");
+$("b-save-name").onclick = () => act($("b-save-name"), async () => {
+  await api("/api/config", {nombre: $("c-nombre").value}); await loadConfig(); fillConfig();
+}, "Nombre cambiado");
+$("b-test").onclick = () => {
+  if (!confirm("La grabación normal se pausa 3 minutos mientras se hace la prueba. ¿Seguir?")) return;
+  act($("b-test"), () => api("/api/prueba", {}), "Prueba iniciada: en 3 min vuelve a grabar normal");
+};
+
+/* ---------- encuadre ---------- */
+$("b-fr-start").onclick = () => act($("b-fr-start"), async () => {
+  await api("/api/encuadre", {on: true});
+  frRoi = CFG.grabacion.zona.slice(); frDirty = false; $("rot").checked = CFG.grabacion.rotar_180;
+  $("fr-off").hidden = true; $("fr-on").hidden = false;
+  refreshImg($("frimg"), () => TAB === "encuadre" && !$("fr-on").hidden);
+  draw();
+}, "Cargando la imagen…");
+$("b-fr-cancel").onclick = () => act(null, async () => { await api("/api/encuadre", {on: false}); $("fr-on").hidden = true; $("fr-off").hidden = false; }, "Volviendo a grabar");
+$("b-fr-save").onclick = () => act($("b-fr-save"), async () => {
+  const r = await api("/api/zona", {zona: frRoi, rotar_180: $("rot").checked});
+  await loadConfig(); $("fr-on").hidden = true; $("fr-off").hidden = false; showTab("estado");
+  return r;
+}, "Zona guardada. Grabando.");
+$("b-full").onclick = () => { frRoi = [0, 0, 1, 1]; frDirty = true; draw(); };
+$("rot").onchange = () => api("/api/zona", {zona: frRoi, rotar_180: $("rot").checked, terminar: false}).catch(() => {});
+
+const cv = $("cv"), ctx = cv.getContext("2d");
+let drag = null;
+function rel(e) {
+  const r = cv.getBoundingClientRect();
+  return [Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), Math.min(1, Math.max(0, (e.clientY - r.top) / r.height))];
+}
+cv.addEventListener("pointerdown", e => { cv.setPointerCapture(e.pointerId); drag = rel(e); });
+cv.addEventListener("pointermove", e => {
+  if (!drag) return; const p = rel(e);
+  frRoi = [Math.min(drag[0], p[0]), Math.min(drag[1], p[1]), Math.abs(p[0] - drag[0]), Math.abs(p[1] - drag[1])];
+  frDirty = true; draw();
+});
+cv.addEventListener("pointerup", () => {
+  drag = null;
+  if (frRoi[2] < 0.05 || frRoi[3] < 0.05) { frRoi = CFG.grabacion.zona.slice(); toast("Zona muy chica: arrastrá un rectángulo más grande"); }
+  draw();
+});
+function draw() {
+  const r = cv.getBoundingClientRect(); cv.width = r.width * devicePixelRatio; cv.height = r.height * devicePixelRatio;
+  const W = cv.width, H = cv.height; ctx.clearRect(0, 0, W, H);
+  if (!frRoi) return;
+  const [x, y, w, h] = [frRoi[0] * W, frRoi[1] * H, frRoi[2] * W, frRoi[3] * H];
+  ctx.fillStyle = "rgba(0,0,0,.55)";
+  ctx.fillRect(0, 0, W, y); ctx.fillRect(0, y + h, W, H - y - h); ctx.fillRect(0, y, x, h); ctx.fillRect(x + w, y, W - x - w, h);
+  ctx.strokeStyle = "#ffcc33"; ctx.lineWidth = 3 * devicePixelRatio; ctx.strokeRect(x, y, w, h);
+  // tamaño de salida estimado (sensor 4:3)
+  const aspect = (frRoi[2] * 4) / (frRoi[3] * 3);
+  let ow = CFG.grabacion.ancho, oh = ow / aspect;
+  if (oh > 1080) { oh = 1080; ow = oh * aspect; }
+  ow = Math.round(ow / 32) * 32; oh = Math.round(oh / 16) * 16;
+  const nat = Math.round(frRoi[2] * 1640);
+  $("fr-info").innerHTML = `Video de salida: <b>${ow}×${oh}</b>` + (ow > nat * 1.15 ? ` · la zona tiene ~${nat} px de detalle real: un ancho mayor no agrega nitidez.` : "");
+}
+$("frimg").addEventListener("load", () => draw(), {once: false});
+window.addEventListener("resize", draw);
+
+/* ---------- WiFi ---------- */
+async function loadWifi(scan) {
+  try {
+    const w = await api("/api/wifi" + (scan ? "?buscar=1" : ""));
+    $("w-known").innerHTML = w.conocidas.length ? w.conocidas.map(k =>
+      `<li><span>📶 ${esc(k.ssid)}</span><button class="btn alt small" data-del="${esc(k.nombre)}">Borrar</button></li>`).join("")
+      : '<li class="hint">Ninguna todavía</li>';
+    $("w-vis").innerHTML = (w.visibles || []).map(v => `<option value="${esc(v.ssid)}">`).join("");
+  } catch (e) {}
+  renderWifiState();
+}
+function renderWifiState() {
+  if (!ST) return;
+  const r = ST.red;
+  let h;
+  if (r.buscando) h = `<div class="notice info">🔎 ${esc(r.buscando)}</div>`;
+  else if (r.modo === "cliente") h = `<p>Conectado a <b>${esc(r.ssid)}</b> · ${r.internet ? "✅ con internet" : "sin internet"}<br><span class="hint">Desde esa misma red se entra a <code>${esc(r.direccion)}</code> (o <code>http://${esc(r.ip)}</code>)</span></p>`;
+  else if (r.modo === "propia") h = `<p>Red propia <b>${esc(r.ssid)}</b> activa · ${r.clientes} conectado(s)<br><span class="hint">Sin internet: los avisos se guardan y se mandan cuando haya conexión.</span></p>`;
+  else h = `<p>Sin red. En menos de un minuto crea su red propia.</p>`;
+  $("w-state").innerHTML = h;
+  const a = ST.avisos;
+  $("tg-state").innerHTML = a.configurado
+    ? `<div class="notice info">✅ Vinculado.${a.ultimo_ok ? " Último envío: " + ddhh(a.ultimo_ok) + "." : ""}${a.pendientes ? " " + a.pendientes + " aviso(s) esperando internet." : ""}${a.error ? "<br>⚠️ " + esc(a.error) : ""}</div>`
+    : `<div class="notice warn">Todavía no está vinculado.</div>`;
+}
+$("w-known").addEventListener("click", e => {
+  const b = e.target.closest("[data-del]"); if (!b || !confirm("¿Borrar la red " + b.dataset.del + "?")) return;
+  act(b, async () => { await api("/api/wifi/borrar", {nombre: b.dataset.del}); loadWifi(); }, "Red borrada");
+});
+$("b-w-add").onclick = () => act($("b-w-add"), async () => {
+  await api("/api/wifi/agregar", {ssid: $("w-ssid").value, clave: $("w-pass").value});
+  $("w-ssid").value = $("w-pass").value = ""; loadWifi();
+}, "Red guardada. Se va a conectar cuando la vea.");
+$("b-w-try").onclick = () => {
+  if (ST.red.modo === "propia" && !confirm("Para buscar redes, el equipo apaga su red propia por ~1 minuto y vas a perder la conexión con esta página. Si no encuentra ninguna red conocida, la vuelve a crear. ¿Seguir?")) return;
+  act($("b-w-try"), () => api("/api/wifi/probar", {}), "Buscando…");
+};
+$("b-w-ap").onclick = () => {
+  if (!confirm("El equipo se desconecta de la red actual y crea su red propia (" + CFG.nombre + ") por 30 min. Vas a tener que conectarte a esa red. ¿Seguir?")) return;
+  act($("b-w-ap"), () => api("/api/wifi/propia", {}), "Creando red propia…");
+};
+$("b-ap-save").onclick = () => act($("b-ap-save"), async () => {
+  const v = $("ap-pass").value; if (v.length < 8) throw new Error("La clave debe tener al menos 8 caracteres");
+  await api("/api/config", {wifi: {ap_clave: v}}); await loadConfig();
+}, "Clave guardada (se aplica la próxima vez que se active la red propia)");
+$("b-tg-link").onclick = () => act($("b-tg-link"), async () => {
+  const r = await api("/api/avisos/detectar", {token: $("tg-token").value}); await loadConfig(); poll();
+  toast("✅ Vinculado con " + (r.nombre || r.chat_id), 4000);
+});
+$("b-tg-save").onclick = () => act($("b-tg-save"), async () => {
+  await api("/api/config", {avisos: {intervalo_h: +$("tg-int").value, foto: $("tg-foto").checked}}); await loadConfig();
+}, "Guardado");
+$("b-tg-test").onclick = () => act($("b-tg-test"), () => api("/api/avisos/probar", {}), "Mensaje enviado: revisá Telegram");
+
+/* ---------- sistema ---------- */
+function renderTime() {
+  const h = ST.hora, diff = Date.now() / 1000 - h.pi;
+  const src = h.ntp ? "sincronizada por internet" : h.rtc ? "reloj RTC" : h.ajustada_celular ? "ajustada con el celular" : "NO verificada";
+  $("t-state").innerHTML = `<p>Equipo: <b class="mono">${new Date(h.pi * 1000).toLocaleString("es-AR")}</b> (${src})<br>
+    Este dispositivo: <span class="mono">${new Date().toLocaleString("es-AR")}</span>${Math.abs(diff) > 5 ? ` · <b style="color:var(--warn)">diferencia ${Math.round(diff)} s</b>` : ""}</p>`;
+  $("ver").textContent = "AntCam versión " + ST.version;
+}
+$("b-time").onclick = () => act($("b-time"), async () => { await api("/api/hora", {ms: Date.now()}); poll(); }, "Hora ajustada");
+async function loadEvents() {
+  try {
+    const ev = await api("/api/eventos?n=80&nivel=" + ($("ev-all").checked ? "debug" : "info"));
+    $("events").innerHTML = ev.length ? ev.map(e => `<div class="ev ${e.nivel}"><time>${ddhh(e.t)}</time>${esc(e.msg)}</div>`).join("") : '<p class="hint">Sin eventos</p>';
+  } catch (e) {}
+}
+$("ev-all").onchange = loadEvents;
+$("b-acc").onclick = () => act($("b-acc"), () => api("/api/clave_acceso", {clave: $("acc-pass").value}), "Guardada");
+$("b-off").onclick = () => {
+  if (!confirm("¿Apagar el equipo? Deja de grabar. Para volver a encenderlo hay que desenchufar y enchufar.")) return;
+  act($("b-off"), () => api("/api/sistema/apagar", {}), "Apagando… esperá 20 s antes de desenchufar", 8000);
+};
+$("b-reboot").onclick = () => {
+  if (!confirm("¿Reiniciar el equipo? Tarda ~1 minuto y vuelve a grabar solo.")) return;
+  act($("b-reboot"), () => api("/api/sistema/reiniciar", {}), "Reiniciando…");
+};
+
+/* ---------- arranque ---------- */
+(async function start() {
+  api("/api/hora", {ms: Date.now()}).catch(() => {});  // ajustar la hora del equipo con la de este dispositivo
+  await loadConfig().catch(() => {});
+  await poll();
+  setInterval(poll, 3000);
+  setInterval(() => { if (TAB === "sis") loadEvents(); }, 10000);
+})();
+</script>
+</body>
+</html>

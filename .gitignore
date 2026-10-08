@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+sim/
+imagen/stage-antcam/00-antcam/files/
+imagen/stage-antcam/00-antcam/00-packages-nr
