@@ -329,7 +329,7 @@ Necesita `pip install av flask pillow numpy`. Los pendrives simulados son carpet
 
 **Laboratorio de Ecología de Hormigas** — Facultad de Ciencias Agropecuarias, Universidad Nacional de Entre Ríos (UNER).
 
-- Director del Laboratorio: **Dr. Julian Alberto Sabattini**
+- Autor y desarrollo: **Dr. Julian Alberto Sabattini**
 - Consultas y contacto: [julian.sabattini@uner.edu.ar](mailto:julian.sabattini@uner.edu.ar)
 
 AntCam está **en desarrollo**. Basado en AntVideoRecord (Sabattini et al., *HardwareX*, 2022).
