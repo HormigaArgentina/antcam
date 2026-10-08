@@ -22,6 +22,7 @@ DEFAULTS = {
     },
     "rotulo": {                    # marca en el video, abajo a la izquierda
         "fecha_hora": True,
+        "logo": True,              # hormiga del laboratorio, abajo a la derecha
         "lugar": "",
         "especie": "",
         "nota": "",
@@ -137,6 +138,7 @@ def validate(cfg):
 
     r = cfg["rotulo"]
     r["fecha_hora"] = bool(r.get("fecha_hora"))
+    r["logo"] = bool(r.get("logo", True))
     for k in ("lugar", "especie", "nota"):
         r[k] = re.sub(r"[\x00-\x1f]+", " ", str(r.get(k) or "")).strip()[:40]
 

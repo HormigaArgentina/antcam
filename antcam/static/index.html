@@ -86,6 +86,13 @@ code{background:var(--bg);padding:1px 5px;border-radius:5px;font-size:.92em;word
   font-weight:600;opacity:0;transition:.25s;pointer-events:none;z-index:9;max-width:90vw;text-align:center}
 #toast.on{opacity:1}
 .mono{font-variant-numeric:tabular-nums}
+.brand{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:10px 14px;margin-bottom:14px;display:flex;justify-content:center}
+.brand img{display:block;width:100%;max-width:440px;height:auto}
+.foot{margin-top:26px;padding:18px 16px;border-top:1px solid var(--line);text-align:center;color:var(--muted);font-size:14px;line-height:1.5}
+.foot img{display:block;width:100%;max-width:300px;height:auto;margin:0 auto 12px;background:#fff;border-radius:10px;padding:8px}
+.foot p{margin:6px 0}
+.foot b{color:var(--ink)}
+.foot a{color:var(--accent);font-weight:600;word-break:break-all}
 </style>
 </head>
 <body>
@@ -96,6 +103,7 @@ code{background:var(--bg);padding:1px 5px;border-radius:5px;font-size:.92em;word
 </header>
 
 <main>
+<div class="brand"><img src="/logo.png" alt="Laboratorio de Ecología de Hormigas · Facultad de Ciencias Agropecuarias, UNER"></div>
 <!-- ============================ ESTADO -->
 <section id="s-estado" class="on">
   <div id="notices"></div>
@@ -204,8 +212,9 @@ code{background:var(--bg);padding:1px 5px;border-radius:5px;font-size:.92em;word
   </div>
   <div class="card">
     <h2>Marca en el video</h2>
-    <p class="hint" style="margin-top:0">Texto chico abajo a la izquierda, blanco con borde negro. Queda grabado en la imagen: no se puede sacar después.</p>
+    <p class="hint" style="margin-top:0">Texto chico abajo a la izquierda, blanco con borde negro, y la hormiga del laboratorio abajo a la derecha. Queda grabado en la imagen: no se puede sacar después.</p>
     <label class="check"><input type="checkbox" id="r-fecha"><span>Fecha y hora<br><span class="hint">La hora real de cada cuadro, con segundos.</span></span></label>
+    <label class="check"><input type="checkbox" id="r-logo"><span>Hormiga del laboratorio<br><span class="hint">Chica y semitransparente, abajo a la derecha.</span></span></label>
     <label for="r-lugar">Lugar</label>
     <input id="r-lugar" maxlength="40" placeholder="Ej: Parque Escolar UNER, parcela 3">
     <label for="r-especie">Especie</label>
@@ -213,6 +222,7 @@ code{background:var(--bg);padding:1px 5px;border-radius:5px;font-size:.92em;word
     <label for="r-nota">Nota</label>
     <input id="r-nota" maxlength="40" placeholder="Ej: nido 12 · camino norte">
     <div class="stage" style="margin-top:12px;aspect-ratio:4/1;background:#6b5a43">
+      <img id="r-prev-logo" src="/hormiga_marca.png" alt="" style="position:absolute;right:10px;bottom:8px;height:44%;width:auto;min-height:0">
       <div id="r-prev" style="position:absolute;left:10px;bottom:8px;color:#fff;font:700 13px/1.25 system-ui,sans-serif;
         text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000"></div>
     </div>
@@ -316,6 +326,16 @@ code{background:var(--bg);padding:1px 5px;border-radius:5px;font-size:.92em;word
     <p class="hint" id="ver"></p>
   </div>
 </section>
+
+<footer class="foot">
+  <img src="/logo.png" alt="" aria-hidden="true">
+  <p><b>AntCam</b> · versión <span id="f-ver">–</span> · <span class="tag warn">en desarrollo</span></p>
+  <p>Laboratorio de Ecología de Hormigas<br>Facultad de Ciencias Agropecuarias · Universidad Nacional de Entre Ríos</p>
+  <p>Director del Laboratorio: <b>Dr. Julian Alberto Sabattini</b></p>
+  <p>Consultas y contacto: <a href="mailto:julian.sabattini@uner.edu.ar">julian.sabattini@uner.edu.ar</a></p>
+  <p id="f-rg" hidden>ResearchGate: <a id="f-rg-a" href="#" target="_blank" rel="noopener">perfil del director</a></p>
+  <p style="font-size:12px">Basado en AntVideoRecord (Sabattini et al., <i>HardwareX</i>, 2022) · Código abierto: <a href="https://github.com/HormigaArgentina/antcam" target="_blank" rel="noopener">github.com/HormigaArgentina/antcam</a></p>
+</footer>
 </main>
 
 <nav id="nav">
@@ -328,6 +348,9 @@ code{background:var(--bg);padding:1px 5px;border-radius:5px;font-size:.92em;word
 <div id="toast"></div>
 
 <script>
+/* Enlace a ResearchGate del pie de página: completar la dirección para que aparezca. */
+const RESEARCHGATE_URL = "";
+
 "use strict";
 const $ = id => document.getElementById(id);
 let ST = null, CFG = null, TAB = "estado", liveOn = false, frRoi = null, frDirty = false;
@@ -393,6 +416,8 @@ async function poll() {
 function render() {
   const g = ST.grabador, s = ST;
   $("hname").textContent = s.nombre;
+  $("f-ver").textContent = s.version || "–";
+  if (RESEARCHGATE_URL) { $("f-rg-a").href = RESEARCHGATE_URL; $("f-rg").hidden = false; }
   document.title = s.nombre;
   $("hclock").textContent = new Date(s.hora.pi * 1000).toLocaleTimeString("es-AR", {hour: "2-digit", minute: "2-digit"});
   let cls, title, sub = "";
@@ -528,7 +553,7 @@ function fillConfig() {
   $("c-align").checked = g.alinear_reloj; $("c-exp").checked = g.fijar_exposicion;
   $("c-nombre").value = CFG.nombre;
   const r = CFG.rotulo || {};
-  $("r-fecha").checked = !!r.fecha_hora;
+  $("r-fecha").checked = !!r.fecha_hora; $("r-logo").checked = r.logo !== false;
   $("r-lugar").value = r.lugar || ""; $("r-especie").value = r.especie || ""; $("r-nota").value = r.nota || "";
   rotPrev();
   $("ap-name").textContent = CFG.nombre; $("ap-pass").value = CFG.wifi.ap_clave;
@@ -552,12 +577,13 @@ function rotPrev() {
   const p = n => String(n).padStart(2, "0"), d = new Date();
   const fecha = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}  ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
   const lines = [info, $("r-fecha").checked ? fecha : ""].filter(Boolean);
-  $("r-prev").innerHTML = lines.length ? lines.map(esc).join("<br>") : '<span style="opacity:.6;text-shadow:none">(sin marca)</span>';
+  $("r-prev-logo").hidden = !$("r-logo").checked;
+  $("r-prev").innerHTML = lines.length || $("r-logo").checked ? lines.map(esc).join("<br>") : '<span style="opacity:.6;text-shadow:none">(sin marca)</span>';
 }
-["r-fecha", "r-lugar", "r-especie", "r-nota"].forEach(i => $(i).addEventListener("input", rotPrev));
+["r-fecha", "r-logo", "r-lugar", "r-especie", "r-nota"].forEach(i => $(i).addEventListener("input", rotPrev));
 setInterval(() => { if (TAB === "video") rotPrev(); }, 1000);
 $("b-save-rot").onclick = () => act($("b-save-rot"), async () => {
-  await api("/api/config", {rotulo: {fecha_hora: $("r-fecha").checked, lugar: $("r-lugar").value,
+  await api("/api/config", {rotulo: {fecha_hora: $("r-fecha").checked, logo: $("r-logo").checked, lugar: $("r-lugar").value,
     especie: $("r-especie").value, nota: $("r-nota").value}});
   await loadConfig(); fillConfig();
 }, "Marca guardada");
