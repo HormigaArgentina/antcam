@@ -1,10 +1,13 @@
-# Fabrica la imagen lista para grabar en la tarjeta SD.
-# - Al subir una etiqueta de versión (ej. v2.0.0) la publica en "Releases".
-# - También se puede lanzar a mano desde la pestaña Actions ("Run workflow").
+# Fabrica la imagen lista para grabar en la tarjeta SD y la publica en "Releases".
+# Para publicar una versión nueva: editar el archivo VERSION (se puede desde la web de GitHub).
+# Las versiones con guion (ej. 2.1.0-beta.1) salen como "pre-release".
+# También se puede lanzar a mano desde Actions -> Imagen AntCam -> Run workflow (no publica).
 name: Imagen AntCam
 
 on:
   push:
+    branches: [main]
+    paths: [VERSION]
     tags: ["v*"]
   workflow_dispatch:
 
@@ -18,6 +21,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Versión
+        id: ver
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then V="${{ github.ref_name }}"; else V="v$(tr -d ' \n' < VERSION)"; fi
+          [ "${{ github.event_name }}" = "workflow_dispatch" ] && V="$V-prueba${{ github.run_number }}"
+          echo "v=$V" >> "$GITHUB_OUTPUT"
+          echo "Versión: $V"
+
       - name: Preparar la etapa AntCam
         run: |
           F=imagen/stage-antcam/00-antcam
@@ -29,7 +40,7 @@ jobs:
         id: build
         uses: usimd/pi-gen-action@v1
         with:
-          image-name: antcam-${{ github.ref_type == 'tag' && github.ref_name || format('prueba-{0}', github.run_number) }}
+          image-name: antcam-${{ steps.ver.outputs.v }}
           release: trixie
           stage-list: stage0 stage1 stage2 ./imagen/stage-antcam
           pi-gen-release: AntCam
@@ -57,11 +68,14 @@ jobs:
           compression-level: 0
 
       - name: Publicar en Releases
-        if: github.ref_type == 'tag'
+        if: github.event_name == 'push'
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.ver.outputs.v }}
+          name: AntCam ${{ steps.ver.outputs.v }}
+          target_commitish: ${{ github.sha }}
           files: ${{ steps.build.outputs.image-path }}
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          prerelease: ${{ contains(steps.ver.outputs.v, '-') }}
           body: |
             Imagen lista de AntCam para Raspberry Pi 3B+ / 3B / 4 / Zero 2 W con cámara v2.
 

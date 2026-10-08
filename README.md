@@ -47,7 +47,7 @@ No hace falta terminal ni comandos.
 
 Acceso de mantenimiento por SSH, si alguna vez hace falta: usuario `antcam`, clave `hormigas`.
 
-> **Cómo se fabrica la imagen:** GitHub la arma sola (`.github/workflows/imagen.yml`) cada vez que se publica una versión nueva con una etiqueta `vX.Y.Z`. Tarda alrededor de 1 hora. También se puede lanzar a mano desde la pestaña **Actions → Imagen AntCam → Run workflow**; en ese caso el resultado queda en "Artifacts" durante 14 días.
+> **Cómo se fabrica la imagen:** GitHub la arma sola (`.github/workflows/imagen.yml`) cada vez que cambia el archivo **`VERSION`**. Se puede editar desde la web de GitHub: lápiz → cambiar el número → *Commit*. Tarda alrededor de 1 hora y aparece en Releases. Las versiones con guion (por ejemplo `2.1.0-beta.1`) salen como versión de prueba ("pre-release"). El avance se ve en la pestaña **Actions**.
 
 ---
 
