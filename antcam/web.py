@@ -97,6 +97,11 @@ def index():
     return send_file(HERE / "static" / "index.html", max_age=0)
 
 
+@app.get("/<any('logo.png', 'hormiga_marca.png'):nombre>")
+def imagen_estatica(nombre):
+    return send_file(HERE / "static" / nombre, mimetype="image/png", max_age=86400)
+
+
 @app.get("/vista.jpg")
 def preview():
     t0 = time.time()

@@ -1,3 +1,5 @@
+<p align="center"><img src="antcam/static/logo.png" alt="Laboratorio de Ecología de Hormigas · Facultad de Ciencias Agropecuarias, UNER" width="520"></p>
+
 # AntCam 2 — grabación autónoma de caminos de forrajeo
 
 Versión nueva del AntVideoRecord (Sabattini et al., *HardwareX* 2022). Graba video en forma continua durante días, solo, sin pantalla ni VNC, y se configura desde el navegador del celular.
@@ -13,6 +15,7 @@ Versión nueva del AntVideoRecord (Sabattini et al., *HardwareX* 2022). Graba vi
 - Manda avisos por Telegram cuando tiene internet.
 - La hora se ajusta sola con la del celular al abrir la página.
 - Marca chica en el video, abajo a la izquierda, con la fecha y hora, y opcionalmente lugar, especie y una nota.
+- La hormiga del laboratorio, chica y semitransparente, abajo a la derecha del video (se puede desactivar).
 
 ---
 
@@ -319,3 +322,15 @@ ANTCAM_SIM=1 ANTCAM_PORT=8080 python3 -m antcam.web
 ```
 
 Necesita `pip install av flask pillow numpy`. Los pendrives simulados son carpetas dentro de `sim/drives/`.
+
+---
+
+## Contacto
+
+**Laboratorio de Ecología de Hormigas** — Facultad de Ciencias Agropecuarias, Universidad Nacional de Entre Ríos (UNER).
+
+- Director del Laboratorio: **Dr. Julian Alberto Sabattini**
+- Consultas y contacto: [julian.sabattini@uner.edu.ar](mailto:julian.sabattini@uner.edu.ar)
+
+AntCam está **en desarrollo**. Basado en AntVideoRecord (Sabattini et al., *HardwareX*, 2022).
+

@@ -9,8 +9,12 @@ Letras blancas con borde negro: se leen sobre tierra clara u oscura sin tapar co
 
 import threading
 import time
+from pathlib import Path
 
 import numpy as np
+
+LOGO = Path(__file__).parent / "static" / "hormiga_marca.png"
+LOGO_ALTO_RELATIVO = 0.085  # alto de la hormiga respecto del alto del cuadro
 
 FONTS = [
     "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
@@ -45,6 +49,7 @@ class Rotulo:
         self._cfg = {}
         self._cache = {}       # (líneas, alto de letra) -> máscara
         self._fonts = {}
+        self._logo = {}        # alto -> (luminancia, alfa 0..256)
         self.configure(cfg_rotulo or {})
 
     # ---------------------------------------------------------------- configuración
@@ -56,7 +61,7 @@ class Rotulo:
     @property
     def activo(self):
         c = self._cfg
-        return bool(c.get("fecha_hora")) or bool(texto_info(c))
+        return bool(c.get("fecha_hora")) or bool(texto_info(c)) or bool(c.get("logo"))
 
     def lineas(self, t=None):
         c = self._cfg
@@ -105,6 +110,37 @@ class Rotulo:
         self._cache[key] = m
         return m
 
+    def _logo_px(self, alto):
+        """Hormiga del laboratorio en escala de grises, ya achicada (se calcula una sola vez)."""
+        m = self._logo.get(alto)
+        if m is None:
+            from PIL import Image
+            try:
+                im = Image.open(LOGO).convert("LA")
+            except OSError:
+                m = (None, None)
+            else:
+                ancho = max(1, round(im.width * alto / im.height))
+                im = im.resize((ancho, alto), Image.LANCZOS)
+                a = np.asarray(im)
+                m = (a[..., 0].astype(np.uint16), (a[..., 1].astype(np.uint16) * 256 + 127) // 255)
+            self._logo[alto] = m
+        return m
+
+    def _aplicar_logo(self, y, h, w):
+        alto = max(24, int(round(h * LOGO_ALTO_RELATIVO)))
+        lum, alfa = self._logo_px(alto)
+        if lum is None:
+            return
+        lh, lw = lum.shape
+        margen = max(4, int(round(h * ALTO_RELATIVO)) // 2)
+        if lh + margen > h or lw + margen > w:
+            return
+        y0, x0 = h - margen - lh, w - margen - lw
+        reg = y[y0:y0 + lh, x0:x0 + lw]
+        mezcla = (reg.astype(np.uint16) * (256 - alfa) + lum * alfa) >> 8
+        reg[...] = mezcla.astype(np.uint8)
+
     def aplicar(self, y, t=None):
         """Dibuja la marca sobre un plano de luminancia (alto, ancho), modificándolo en el lugar."""
         if not self.activo:
@@ -113,6 +149,8 @@ class Rotulo:
         if h < 40 or w < 80:
             return y
         with self._lock:
+            if self._cfg.get("logo"):
+                self._aplicar_logo(y, h, w)
             lineas = self.lineas(t)
             if not lineas:
                 return y
