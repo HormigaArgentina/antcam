@@ -33,6 +33,7 @@ DEFAULTS = {
         "reserva_gb": 1.0,         # espacio que se deja libre en cada pendrive
     },
     "wifi": {
+        "ap_abierta": True,        # red propia sin clave (con clave no conecta en la Pi 3B+)
         "ap_clave": "hormigas2026",
         "reintento_min": 15,       # cada cuánto busca redes conocidas estando en modo propio
     },
@@ -148,6 +149,7 @@ def validate(cfg):
     wf = cfg["wifi"]
     clave = str(wf.get("ap_clave") or "")
     wf["ap_clave"] = clave if 8 <= len(clave) <= 63 else d["wifi"]["ap_clave"]
+    wf["ap_abierta"] = bool(wf.get("ap_abierta", True))
     wf["reintento_min"] = int(_clamp(wf.get("reintento_min"), 5, 240, 15))
 
     av = cfg["avisos"]

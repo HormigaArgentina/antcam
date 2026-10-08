@@ -92,6 +92,10 @@ def main():
     if datos.get("red_propia_clave"):
         cfg["wifi"]["ap_clave"] = datos["red_propia_clave"]
         cambios.append("clave de la red propia")
+    ra = datos.get("red_propia_abierta", "").lower()
+    if ra in ("si", "sí", "no"):
+        cfg["wifi"]["ap_abierta"] = ra != "no"
+        cambios.append(f"red propia abierta: {ra}")
     if datos.get("telegram_token"):
         cfg["avisos"]["telegram_token"] = datos["telegram_token"]
         cambios.append("token de Telegram")

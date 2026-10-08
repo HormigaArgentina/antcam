@@ -40,10 +40,10 @@ No hace falta terminal ni comandos.
    - Sistema operativo: *Usar personalizado* → elegí el archivo descargado.
    - Almacenamiento: la microSD → **Escribir**.
    - Si pregunta si querés personalizar, respondé **No**.
-3. **(Opcional) Completá los ajustes.** Con la tarjeta todavía en la PC, abrí la unidad **bootfs** y editá `antcam.txt` con el Bloc de notas. Ahí van el nombre del equipo, la WiFi de la oficina, la clave de la red propia, Telegram y la marca del video (lugar, especie). Sirve para dejar varios equipos preparados igual. Si no lo tocás, también funciona.
+3. **(Opcional) Completá los ajustes.** Con la tarjeta todavía en la PC, abrí la unidad **bootfs** y editá `antcam.txt` con el Bloc de notas. Ahí van el nombre del equipo, la WiFi de la oficina, si la red propia lleva clave, Telegram y la marca del video (lugar, especie). Sirve para dejar varios equipos preparados igual. Si no lo tocás, también funciona.
 4. **Armá y encendé.** Poné la tarjeta, la cámara y el pendrive, y enchufá.
    - El primer encendido tarda 2–3 minutos: prepara la tarjeta y se reinicia una vez.
-   - Después aparece la WiFi **AntCam-XXXX**, con un nombre propio de cada placa. La clave es `hormigas2026`.
+   - Después aparece la WiFi **AntCam-XXXX**, con un nombre propio de cada placa. Es **abierta** (sin clave): en la Pi 3B+ la red propia con clave no deja conectarse.
    - Ya está grabando. Seguí con "Uso en el campo".
 
 Acceso de mantenimiento por SSH, si alguna vez hace falta: usuario `antcam`, clave `hormigas`.
@@ -113,7 +113,7 @@ Desde la PC o el celular, en la misma WiFi, abrí **http://antcam-01.local**. Ya
 
 1. Conectá los pendrives, la cámara y la luz. Encendé el equipo.
 2. Esperá ~2 minutos. El **LED verde de la placa late como un corazón: está grabando.**
-3. Con el celular, en Ajustes → WiFi, conectate a la red **AntCam-01** (clave `hormigas2026`). En general la página se abre sola; si no, entrá a **http://10.42.0.1**.
+3. Con el celular, en Ajustes → WiFi, conectate a la red **AntCam-01** (abierta, sin clave). En general la página se abre sola; si no, entrá a **http://10.42.0.1**.
    - Si no abre, **apagá los datos móviles** del celular un momento.
 4. Al abrir la página, **la hora del equipo se ajusta con la del celular**.
 5. En **Encuadre**: tocá *Empezar a encuadrar*, arrastrá el dedo sobre el camino y tocá *Guardar y grabar*.

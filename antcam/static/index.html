@@ -256,9 +256,10 @@ code{background:var(--bg);padding:1px 5px;border-radius:5px;font-size:.92em;word
   <div class="card">
     <h2>Red propia</h2>
     <p class="hint">Nombre: <b id="ap-name"></b> · Se entra a <code>http://10.42.0.1</code></p>
-    <label for="ap-pass">Clave de la red propia</label>
+    <label class="check"><input type="checkbox" id="ap-open"><span>Red propia abierta (sin clave)<br><span class="hint">Recomendado en la Raspberry Pi 3B+: con clave el chip WiFi no deja conectarse. Para proteger la página, usá una clave de acceso en Sistema.</span></span></label>
+    <label for="ap-pass">Clave de la red propia (solo si no es abierta)</label>
     <input id="ap-pass" minlength="8" maxlength="63">
-    <button class="btn alt wide" id="b-ap-save" style="margin-top:10px">Guardar clave</button>
+    <button class="btn alt wide" id="b-ap-save" style="margin-top:10px">Guardar</button>
   </div>
   <div class="card">
     <h2>Avisos por Telegram</h2>
@@ -531,6 +532,7 @@ function fillConfig() {
   $("r-lugar").value = r.lugar || ""; $("r-especie").value = r.especie || ""; $("r-nota").value = r.nota || "";
   rotPrev();
   $("ap-name").textContent = CFG.nombre; $("ap-pass").value = CFG.wifi.ap_clave;
+  $("ap-open").checked = CFG.wifi.ap_abierta !== false; $("ap-pass").disabled = $("ap-open").checked;
   $("w-int").textContent = CFG.wifi.reintento_min;
   $("tg-token").value = CFG.avisos.telegram_token; $("tg-int").value = CFG.avisos.intervalo_h;
   $("tg-foto").checked = CFG.avisos.foto;
@@ -666,10 +668,12 @@ $("b-w-ap").onclick = () => {
   if (!confirm("El equipo se desconecta de la red actual y crea su red propia (" + CFG.nombre + ") por 30 min. Vas a tener que conectarte a esa red. ¿Seguir?")) return;
   act($("b-w-ap"), () => api("/api/wifi/propia", {}), "Creando red propia…");
 };
+$("ap-open").onchange = () => { $("ap-pass").disabled = $("ap-open").checked; };
 $("b-ap-save").onclick = () => act($("b-ap-save"), async () => {
-  const v = $("ap-pass").value; if (v.length < 8) throw new Error("La clave debe tener al menos 8 caracteres");
-  await api("/api/config", {wifi: {ap_clave: v}}); await loadConfig();
-}, "Clave guardada (se aplica la próxima vez que se active la red propia)");
+  const abierta = $("ap-open").checked, v = $("ap-pass").value;
+  if (!abierta && v.length < 8) throw new Error("La clave debe tener al menos 8 caracteres");
+  await api("/api/config", {wifi: abierta ? {ap_abierta: true} : {ap_abierta: false, ap_clave: v}}); await loadConfig(); fillConfig();
+}, "Guardado (se aplica la próxima vez que se active la red propia)");
 $("b-tg-link").onclick = () => act($("b-tg-link"), async () => {
   const r = await api("/api/avisos/detectar", {token: $("tg-token").value}); await loadConfig(); poll();
   toast("✅ Vinculado con " + (r.nombre || r.chat_id), 4000);
