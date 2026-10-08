@@ -32,7 +32,7 @@ Versión nueva del AntVideoRecord (Sabattini et al., *HardwareX* 2022). Graba vi
 
 No hace falta terminal ni comandos.
 
-1. **Descargá la imagen.** Entrá a **github.com/HormigaArgentina/antcam → Releases** y bajá el archivo `antcam-vX.Y.Z.img.xz`. Alcanza con bajarlo una vez.
+1. **Descargá la imagen.** Entrá a **github.com/HormigaArgentina/antcam → Releases** y bajá el archivo que termina en `.img.xz` (de la versión más nueva). Alcanza con bajarlo una vez.
 2. **Grabá la tarjeta.**
    - Abrí **Raspberry Pi Imager** (raspberrypi.com/software).
    - Dispositivo: tu Raspberry.
