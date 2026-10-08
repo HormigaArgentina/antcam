@@ -48,6 +48,7 @@ section.on{display:block}
 .kv span{font-size:13px;color:var(--muted)}
 .btn{appearance:none;border:2px solid var(--accent);background:var(--accent);color:var(--accent-ink);
   font:inherit;font-weight:700;padding:12px 16px;border-radius:12px;cursor:pointer;min-height:48px}
+a.btn{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
 .btn.alt{background:transparent;color:var(--accent)}
 .btn.bad{background:var(--bad);border-color:var(--bad)}
 .btn.small{padding:6px 12px;min-height:36px;font-size:14px}
@@ -137,6 +138,24 @@ code{background:var(--bg);padding:1px 5px;border-radius:5px;font-size:.92em;word
       <div class="kv"><b id="k-red">–</b><span id="k-red2">WiFi</span></div>
       <div class="kv"><b id="k-volt">–</b><span>alimentación</span></div>
     </div>
+  </div>
+
+  <div class="card">
+    <h2>Alimentación</h2>
+    <div class="row" style="justify-content:space-between;align-items:baseline">
+      <b id="en-now" style="font-size:22px">–</b>
+      <span class="hint mono" id="en-volts" style="margin:0"></span>
+    </div>
+    <p class="hint" id="en-sum" style="margin-top:4px"></p>
+    <svg id="en-chart" viewBox="0 0 360 110" style="width:100%;height:auto;display:block" role="img" aria-label="Baja tensión en los últimos 30 minutos"></svg>
+    <div class="row" style="justify-content:space-between;font-size:12px;color:var(--muted)"><span>hace 30 min</span><span>hace 15 min</span><span>ahora</span></div>
+    <p class="hint">Cada barra son 10 segundos: <span style="color:var(--ok);font-weight:700">verde</span> = tensión bien, <span style="color:var(--bad);font-weight:700">roja</span> = cayó por debajo de ~4.63 V (más alta = más tiempo en baja). La Raspberry Pi 3 no mide los volts: solo detecta si cae debajo de ese límite. Para regular, girá el regulador despacio con el equipo <b>grabando</b> y esperá que las barras nuevas salgan verdes.</p>
+    <label for="en-min">Anotar en el registro cada</label>
+    <select id="en-min"></select>
+    <div class="row" style="margin-top:10px">
+      <a class="btn alt" id="en-dl" href="/energia.csv" download>Descargar registro (CSV)</a>
+    </div>
+    <p class="hint">El registro (<code>energia.csv</code>) también se guarda en el pendrive, al lado de <code>indice.csv</code>.</p>
   </div>
 </section>
 
@@ -420,12 +439,41 @@ function render() {
   $("k-red").textContent = r.modo === "cliente" ? (r.internet ? "Con internet" : "Sin internet") : r.modo === "propia" ? "Red propia" : "Sin red";
   $("k-red2").textContent = r.ssid ? "WiFi: " + r.ssid : "WiFi";
 
+  renderEnergia(g && g.energia);
+
   // pestaña encuadre
   const fr = g && g.modo === "encuadre";
   $("fr-off").hidden = fr; $("fr-on").hidden = !fr;
   if (TAB === "red") renderWifiState();
   if (TAB === "sis") renderTime();
 }
+function renderEnergia(e) {
+  const svg = $("en-chart");
+  if (!e) { $("en-now").textContent = "–"; svg.innerHTML = ""; return; }
+  $("en-now").textContent = e.ahora_baja == null ? "Sin dato" : e.ahora_baja ? "⚠️ Baja tensión ahora" : "✅ Tensión bien";
+  $("en-now").style.color = e.ahora_baja ? "var(--bad)" : e.ahora_baja === false ? "var(--ok)" : "";
+  $("en-volts").textContent = e.mide_volts && e.volts != null ? e.volts.toFixed(2) + " V" : "";
+  $("en-sum").textContent = e.pct_30min == null ? "Juntando datos…" :
+    `Últimos 30 min: baja tensión el ${e.pct_30min}% del tiempo · ${e.caidas_30min} caída${e.caidas_30min == 1 ? "" : "s"}`;
+  const W = 360, H = 110, N = 180, bw = W / N, now = Date.now() / 1000, ts = e.tramo_s || 10;
+  const end = now - now % ts;
+  let h = `<line x1="0" y1="${H - .5}" x2="${W}" y2="${H - .5}" stroke="var(--line)"/>`;
+  for (const [t, f] of e.tramos) {
+    const i = N - 1 - Math.round((end - t) / ts);
+    if (i < 0 || i >= N) continue;
+    const x = (i * bw).toFixed(2), w = (bw * .8).toFixed(2);
+    if (f > 0) { const bh = Math.max(8, f * (H - 4)); h += `<rect x="${x}" y="${(H - bh).toFixed(1)}" width="${w}" height="${bh.toFixed(1)}" fill="var(--bad)"><title>${Math.round(f * 100)}% en baja</title></rect>`; }
+    else h += `<rect x="${x}" y="${H - 6}" width="${w}" height="6" fill="var(--ok)"/>`;
+  }
+  svg.innerHTML = h;
+  if (CFG && CFG.energia && !$("en-min").dataset.ok) {
+    opts("en-min", [1, 5, 10, 15, 30, 60], CFG.energia.registro_min, v => v + (v == 1 ? " minuto" : " minutos"));
+    $("en-min").dataset.ok = 1;
+  }
+}
+$("en-min").onchange = () => act($("en-min"), async () => {
+  await api("/api/config", {energia: {registro_min: +$("en-min").value}}); await loadConfig();
+}, "Guardado");
 function renderDrives(list) {
   if (!list.length) { $("drives").innerHTML = '<p class="hint">Ninguno conectado.</p>'; return; }
   const tagc = {ok: "ok", lleno: "warn", expulsado: "", error: "bad", solo_lectura: "bad"};

@@ -164,6 +164,18 @@ Tené en cuenta:
 
 ---
 
+## Alimentación
+
+En **Estado → Alimentación** se ve si la tensión está bien ahora y un gráfico de los últimos 30 minutos. Cada barra son 10 segundos: verde = bien, roja = cayó por debajo de ~4.63 V. Cuanto más alta la barra roja, más tiempo estuvo baja.
+
+La Raspberry Pi 3 **no mide los volts de entrada**: solo detecta si caen debajo de ese límite. Para regular la fuente, girá el regulador despacio con el equipo **grabando** y mirá que las barras nuevas salgan verdes.
+
+Cada 5 minutos (configurable) se anota en `energia.csv`, en la Pi y en el pendrive al lado de `indice.csv`. Cada línea tiene el período, el % del tiempo en baja tensión, la cantidad de caídas y la temperatura máxima. Se descarga desde la misma tarjeta y también sale en el diagnóstico.
+
+**Si el tester marca bien en la fuente pero la placa detecta baja tensión,** la caída está en el cable o el conector micro-USB. Medí con el equipo grabando entre el **pin 2 (5 V)** y el **pin 6 (GND)** de la Raspberry: ahí tiene que haber 5.0–5.2 V.
+
+---
+
 ## WiFi y avisos
 
 **Cómo decide la red:**

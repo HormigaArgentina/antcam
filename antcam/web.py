@@ -325,6 +325,16 @@ DIAG_CMDS = [
 ]
 
 
+@app.get("/energia.csv")
+def energia_csv():
+    if not paths.ENERGY_FILE.exists():
+        return Response("inicio,fin,muestras,porcentaje_baja_tension,caidas,temperatura_max_c,volts_min\n",
+                        mimetype="text/csv")
+    name = f"energia_{config.slug(config.load()['nombre'])}_{time.strftime('%Y%m%d_%H%M')}.csv"
+    return send_file(paths.ENERGY_FILE, mimetype="text/csv", as_attachment=True,
+                     download_name=name, max_age=0)
+
+
 @app.get("/diagnostico.txt")
 def diagnostico():
     cfg = config.load()
@@ -346,6 +356,11 @@ def diagnostico():
     sec("Eventos (últimos 150)", "\n".join(
         f"{time.strftime('%d/%m %H:%M:%S', time.localtime(e['t']))} [{e['nivel']}] {e['msg']}"
         for e in reversed(events.tail(150, "debug"))))
+    try:
+        sec("Alimentación (energia.csv, últimas 100 líneas)",
+            "\n".join(paths.ENERGY_FILE.read_text().splitlines()[-100:]))
+    except OSError:
+        sec("Alimentación (energia.csv)", "(todavía sin datos)")
     for title, cmd in DIAG_CMDS:
         if paths.SIM:
             sec(title, "(simulación)")

@@ -18,6 +18,7 @@ from pathlib import Path
 import numpy as np
 
 from . import __version__, camera, config, events, paths
+from .energia import Energia
 from .rotulo import Rotulo, texto_info
 from .segment_output import SegmentingOutput
 from .storage import Storage, append_index
@@ -147,6 +148,7 @@ class Recorder:
         self.storage = Storage(self.cfg["nombre"], self.cfg["almacenamiento"]["reserva_gb"])
         self.leds = Leds(self.cfg["leds_externos"])
         self.rotulo = Rotulo(self.cfg["rotulo"])
+        self.energia = Energia(self.cfg["energia"]["registro_min"])
         self.cam = None
         self.out = None
         self.mode = None                 # "grabando" | "encuadre" | "prueba" | None
@@ -326,6 +328,7 @@ class Recorder:
             self.cfg = config.load()
             self.storage.nombre = self.cfg["nombre"]
             self.storage.reserve = int(self.cfg["almacenamiento"]["reserva_gb"] * 1e9)
+            self.energia.registro_s = self.cfg["energia"]["registro_min"] * 60
             if old["rotulo"] != self.cfg["rotulo"]:
                 self.rotulo.configure(self.cfg["rotulo"])  # se aplica al instante, sin cortar
             if old["grabacion"] != self.cfg["grabacion"] or old["nombre"] != self.cfg["nombre"]:
@@ -380,6 +383,22 @@ class Recorder:
             return False
         last = self.out.last_frame_mono
         return last and time.monotonic() - last > STALL_S
+
+    def _energia(self, temp):
+        """Muestrea la alimentación; al cerrar cada período lo anota en energia.csv."""
+        p = self.energia.muestrear(temp)
+        if not p:
+            return
+        Energia.escribir(paths.ENERGY_FILE, p["linea"])
+        t = self.storage.target()
+        if t:  # copia en el pendrive, junto a indice.csv
+            Energia.escribir(Path(t["dir"]) / "energia.csv", p["linea"])
+        if p["caidas"] or p["pct"] > 0:
+            events.log("aviso", f"Alimentación (últimos {p['minutos']} min): baja tensión el "
+                                f"{p['pct']:.1f}% del tiempo, {p['caidas']} caída(s)", SRC, tipo="energia")
+        else:
+            events.log("debug", f"Alimentación (últimos {p['minutos']} min): sin bajas de tensión",
+                       SRC, tipo="energia")
 
     # -------------------------------------------------------------- vista previa
     def _preview_loop(self):
@@ -443,6 +462,7 @@ class Recorder:
             "prueba": {"actual": self.test_current, "pendientes": self.test_queue}
             if self.mode == "prueba" else None,
             "almacenamiento": st,
+            "energia": self.energia.resumen(),
             "sistema": {
                 "temperatura": temp, "uptime_s": uptime_s(),
                 "baja_tension_ahora": bool(th & 0x1) if th is not None else None,
@@ -498,6 +518,11 @@ class Recorder:
                 if cur and cur["target_id"] != self.storage.current_id:
                     self.out.rotate_now()
                 temp, th = self._health()
+
+            try:
+                self._energia(temp)
+            except Exception as e:
+                print("energía:", e, flush=True)
 
             # fin de una prueba de calidad
             if self.mode == "prueba" and self.out and self.out.finished.is_set():

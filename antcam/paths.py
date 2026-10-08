@@ -17,6 +17,7 @@ else:
 
 CONFIG_FILE = STATE_DIR / "config.json"
 EVENTS_FILE = STATE_DIR / "eventos.jsonl"
+ENERGY_FILE = STATE_DIR / "energia.csv"     # registro de baja tensión cada N minutos
 NOTIFIER_STATE = STATE_DIR / "avisos_estado.json"
 STATUS_FILE = RUN_DIR / "estado.json"
 PREVIEW_FILE = RUN_DIR / "vista.jpg"

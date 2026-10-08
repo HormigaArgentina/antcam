@@ -26,6 +26,9 @@ DEFAULTS = {
         "especie": "",
         "nota": "",
     },
+    "energia": {
+        "registro_min": 5,         # cada cuánto se anota la alimentación en energia.csv
+    },
     "almacenamiento": {
         "reserva_gb": 1.0,         # espacio que se deja libre en cada pendrive
     },
@@ -48,6 +51,7 @@ DEFAULTS = {
 ANCHOS = [640, 960, 1280, 1600, 1920]
 FPS = [10, 15, 20, 25, 30]
 SEGMENTOS = [5, 10, 15, 30, 60]
+REGISTRO_ENERGIA = [1, 5, 10, 15, 30, 60]
 
 
 def _merge(base, extra):
@@ -134,6 +138,9 @@ def validate(cfg):
     r["fecha_hora"] = bool(r.get("fecha_hora"))
     for k in ("lugar", "especie", "nota"):
         r[k] = re.sub(r"[\x00-\x1f]+", " ", str(r.get(k) or "")).strip()[:40]
+
+    e = cfg["energia"]
+    e["registro_min"] = int(_closest(e.get("registro_min"), REGISTRO_ENERGIA, 5))
 
     a = cfg["almacenamiento"]
     a["reserva_gb"] = round(_clamp(a.get("reserva_gb"), 0.2, 20, 1.0), 1)
