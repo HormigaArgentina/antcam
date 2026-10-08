@@ -29,6 +29,14 @@ jobs:
           echo "v=$V" >> "$GITHUB_OUTPUT"
           echo "Versión: $V"
 
+      - name: Liberar espacio en disco
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup \
+            /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/share/swift || true
+          docker system prune -af >/dev/null 2>&1 || true
+          df -h /
+
       - name: Preparar la etapa AntCam
         run: |
           F=imagen/stage-antcam/00-antcam
@@ -57,7 +65,7 @@ jobs:
           keyboard-layout: Spanish (Latin American)
           wpa-country: AR
           enable-cloud-init: 0
-          increase-runner-disk-size: true
+          verbose-output: true
 
       - name: Guardar como artefacto (pruebas)
         uses: actions/upload-artifact@v4
