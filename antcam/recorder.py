@@ -15,7 +15,10 @@ import threading
 import time
 from pathlib import Path
 
+import numpy as np
+
 from . import __version__, camera, config, events, paths
+from .rotulo import Rotulo, texto_info
 from .segment_output import SegmentingOutput
 from .storage import Storage, append_index
 
@@ -143,6 +146,7 @@ class Recorder:
         self.cfg = config.load()
         self.storage = Storage(self.cfg["nombre"], self.cfg["almacenamiento"]["reserva_gb"])
         self.leds = Leds(self.cfg["leds_externos"])
+        self.rotulo = Rotulo(self.cfg["rotulo"])
         self.cam = None
         self.out = None
         self.mode = None                 # "grabando" | "encuadre" | "prueba" | None
@@ -191,6 +195,7 @@ class Recorder:
             return False
         try:
             self.cam = camera.open_camera()
+            self.cam.rotulo = self.rotulo
             if self.cam_error:
                 events.log("info", "La cámara volvió a responder", SRC)
             self.cam_error = None
@@ -230,7 +235,20 @@ class Recorder:
             size=(0, 0), fps=self.cfg["grabacion"]["fps"], segment_s=segment_s,
             get_target=target, prefix=prefix, align=align,
             on_closed=self._on_segment, on_error=self.storage.mark_error,
-            max_segments=max_segments)
+            max_segments=max_segments, get_metadata=self._metadata)
+
+    def _metadata(self):
+        """Datos que se guardan dentro de cada .mp4 (se ven en VLC → Información del códec)."""
+        r = self.cfg["rotulo"]
+        partes = [f"Equipo: {self.cfg['nombre']}"]
+        for k, t in (("lugar", "Lugar"), ("especie", "Especie"), ("nota", "Nota")):
+            if r.get(k):
+                partes.append(f"{t}: {r[k]}")
+        md = {"comment": "; ".join(partes), "encoder": f"AntCam {__version__}"}
+        info = texto_info(r)
+        if info:
+            md["title"] = info
+        return md
 
     def _start_pipeline(self, mode):
         if not self._open_camera():
@@ -279,7 +297,7 @@ class Recorder:
         self.segments_today = {day: self.segments_today.get(day, 0) + 1}
         self.last_segment = {k: info[k] for k in ("archivo", "duracion_s", "cuadros", "fps_medio")}
         if "pruebas_calidad" not in info["archivo"]:
-            append_index(info, self.cfg["nombre"])
+            append_index(info, self.cfg["nombre"], self.cfg["rotulo"])
             if info["duracion_s"] > 30 and not info["incompleto"]:
                 bps = info["bytes"] / info["duracion_s"]
                 self.measured_bps = bps if not self.measured_bps else 0.7 * self.measured_bps + 0.3 * bps
@@ -308,6 +326,8 @@ class Recorder:
             self.cfg = config.load()
             self.storage.nombre = self.cfg["nombre"]
             self.storage.reserve = int(self.cfg["almacenamiento"]["reserva_gb"] * 1e9)
+            if old["rotulo"] != self.cfg["rotulo"]:
+                self.rotulo.configure(self.cfg["rotulo"])  # se aplica al instante, sin cortar
             if old["grabacion"] != self.cfg["grabacion"] or old["nombre"] != self.cfg["nombre"]:
                 if self.mode in ("grabando", "prueba", "encuadre"):
                     self._stop_pipeline()  # se reinicia con la configuración nueva
@@ -376,6 +396,9 @@ class Recorder:
                 with self.lock:
                     gray = self.cam.capture_preview() if self.cam else None
                 if gray is not None:
+                    if self.mode in ("grabando", "prueba"):  # que se vea igual que en el video
+                        gray = np.array(gray)
+                        self.rotulo.aplicar(gray)
                     tmp = paths.PREVIEW_FILE.with_suffix(".tmp")
                     Image.fromarray(gray).save(tmp, "JPEG", quality=75)
                     os.replace(tmp, paths.PREVIEW_FILE)

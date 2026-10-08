@@ -42,6 +42,8 @@ class PiCamera:
         self.encoder = None
         self.preview_size = None
         self.running = None  # "grabando" | "encuadre" | None
+        self.rotulo = None   # marca de fecha/hora (rotulo.Rotulo), la pone el grabador
+        self._main = None    # tamaño y paso de línea del flujo principal
 
     def _pick_mode(self):
         """Modo del sensor con campo de visión completo y al menos 30 cuadros/s (en la v2: 1640x1232)."""
@@ -74,6 +76,8 @@ class PiCamera:
             cfg = self.cam.create_video_configuration(raw={"size": self.mode_size}, **kwargs)
         self.cam.configure(cfg)
         self.preview_size = tuple(cfg["lores"]["size"])
+        m = self.cam.camera_configuration()["main"]
+        self._main = (tuple(m["size"]), m.get("stride") or m["size"][0])
         return tuple(cfg["main"]["size"])
 
     def _set_crop(self, zona, rotar):
@@ -92,6 +96,7 @@ class PiCamera:
         self._set_crop(g["zona"], g["rotar_180"])
         mbps = bitrate_mbps or g["bitrate_mbps"]
         self.encoder = H264Encoder(bitrate=int(mbps * 1_000_000), repeat=True, iperiod=g["fps"])
+        self.cam.pre_callback = self._stamp
         self.cam.start()
         self.cam.start_encoder(self.encoder, output)
         self.running = "grabando"
@@ -101,8 +106,25 @@ class PiCamera:
         g = cfg["grabacion"]
         self._configure((1280, 960), 15, g["rotar_180"])
         self._set_crop([0, 0, 1, 1], False)
+        self.cam.pre_callback = None
         self.cam.start()
         self.running = "encuadre"
+
+    def _stamp(self, request):
+        """Antes de codificar cada cuadro: dibuja la fecha/hora en el plano Y (luminancia)."""
+        r = self.rotulo
+        if r is None or not r.activo or not self._main:
+            return
+        try:
+            from picamera2 import MappedArray
+            (w, h), stride = self._main
+            with MappedArray(request, "main") as m:
+                y = m.array.reshape(-1)[:stride * h].reshape(h, stride)[:, :w]
+                r.aplicar(y)
+        except Exception as e:
+            if not getattr(self, "_stamp_err", None):
+                self._stamp_err = str(e)
+                print("marca de fecha:", e, flush=True)
 
     def stop(self):
         try:
@@ -115,6 +137,7 @@ class PiCamera:
             self.cam.stop()
         except Exception:
             pass
+        self.cam.pre_callback = None
         self.running = None
 
     def close(self):
@@ -149,6 +172,7 @@ class FakeCamera:
 
     def __init__(self):
         self.running = None
+        self.rotulo = None
         self._thread = None
         self._stop = threading.Event()
         self._cfg = None
@@ -205,7 +229,9 @@ class FakeCamera:
         n = 0
         nxt = time.monotonic()
         while not self._stop.is_set():
-            gray = self._scene(size, self._zona)
+            gray = np.array(self._scene(size, self._zona))
+            if self.rotulo is not None:
+                self.rotulo.aplicar(gray)
             frame = av.VideoFrame.from_ndarray(np.stack([gray] * 3, -1), format="rgb24").reformat(
                 format="yuv420p")
             frame.pts = n

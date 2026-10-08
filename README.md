@@ -12,6 +12,7 @@ Versión nueva del AntVideoRecord (Sabattini et al., *HardwareX* 2022). Graba vi
 - WiFi automático: se conecta a redes conocidas o, si no hay ninguna, crea su propia red.
 - Manda avisos por Telegram cuando tiene internet.
 - La hora se ajusta sola con la del celular al abrir la página.
+- Marca chica en el video, abajo a la izquierda, con la fecha y hora, y opcionalmente lugar, especie y una nota.
 
 ---
 
@@ -39,7 +40,7 @@ No hace falta terminal ni comandos.
    - Sistema operativo: *Usar personalizado* → elegí el archivo descargado.
    - Almacenamiento: la microSD → **Escribir**.
    - Si pregunta si querés personalizar, respondé **No**.
-3. **(Opcional) Completá los ajustes.** Con la tarjeta todavía en la PC, abrí la unidad **bootfs** y editá `antcam.txt` con el Bloc de notas. Ahí van el nombre del equipo, la WiFi de la oficina, la clave de la red propia y Telegram. Sirve para dejar varios equipos preparados igual. Si no lo tocás, también funciona.
+3. **(Opcional) Completá los ajustes.** Con la tarjeta todavía en la PC, abrí la unidad **bootfs** y editá `antcam.txt` con el Bloc de notas. Ahí van el nombre del equipo, la WiFi de la oficina, la clave de la red propia, Telegram y la marca del video (lugar, especie). Sirve para dejar varios equipos preparados igual. Si no lo tocás, también funciona.
 4. **Armá y encendé.** Poné la tarjeta, la cámara y el pendrive, y enchufá.
    - El primer encendido tarda 2–3 minutos: prepara la tarjeta y se reinicia una vez.
    - Después aparece la WiFi **AntCam-XXXX**, con un nombre propio de cada placa. La clave es `hormigas2026`.
@@ -130,7 +131,7 @@ Desde la PC o el celular, en la misma WiFi, abrí **http://antcam-01.local**. Ya
 ```
 AntCam/
   AntCam-01/
-    indice.csv                      ← lista de fragmentos: inicio, fin, cuadros, fps reales
+    indice.csv                      ← lista de fragmentos: inicio, fin, cuadros, fps reales, lugar, especie, nota
     2026-10-08/
       antcam-01_20261008_083000.mp4
       antcam-01_20261008_090000.mp4
@@ -143,6 +144,23 @@ Los `.mp4` se abren con VLC, ffmpeg, OpenCV y Python. Están grabados en modo "f
 ```
 ffmpeg -i video.mp4 -c copy video_normal.mp4
 ```
+
+---
+
+## Marca en el video
+
+En **Video → Marca en el video** se elige qué aparece abajo a la izquierda de cada cuadro:
+
+- **Fecha y hora**, con segundos (activada por defecto).
+- **Lugar**, **Especie** y **Nota**: texto libre, hasta 40 letras cada uno. Los que quedan vacíos no aparecen.
+
+La vista previa de la página muestra cómo queda. Al tocar **Guardar marca** se aplica al instante, sin cortar la grabación. También se puede cargar desde `antcam.txt` (`marca_fecha`, `lugar`, `especie`, `nota`).
+
+Tené en cuenta:
+
+- La marca **queda grabada en la imagen** y no se puede sacar después. Si vas a contar o seguir hormigas con un programa, dejá ese rincón fuera del camino o excluilo del análisis.
+- Lugar, especie y nota también se guardan en `indice.csv` (una fila por fragmento) y dentro de cada `.mp4` (en VLC: *Herramientas → Información del códec*).
+- La hora de la marca es la del equipo: conviene abrir la página con el celular al instalarlo, o tener el reloj DS3231.
 
 ---
 
@@ -276,6 +294,8 @@ Un módulo **DS3231 para Raspberry Pi** (en Mercado Libre: "módulo RTC DS3231 r
 **Encendido:** `antcam-arranque` corre al encender. Pone un nombre único al primer arranque y aplica `antcam.txt` cuando cambia.
 
 **Archivos persistentes:** la configuración está en `/var/lib/antcam/config.json` y el registro de eventos en `/var/lib/antcam/eventos.jsonl`.
+
+**Marca en el video:** `rotulo.py`. Se dibuja sobre la luminancia de cada cuadro en el `pre_callback` de picamera2, antes del codificador. El texto se renderiza con PIL una vez por segundo y cada cuadro solo copia ese recorte.
 
 **Recorte de zona:** usa `ScalerCrop` del sensor (modo 1640×1232, campo completo). El tamaño de salida respeta la forma de la zona.
 

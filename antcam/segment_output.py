@@ -84,7 +84,7 @@ def next_boundary(now, seg_s, align):
 
 class SegmentingOutput(_Base):
     def __init__(self, size, fps, segment_s, get_target, prefix,
-                 align=True, on_closed=None, on_error=None, max_segments=None):
+                 align=True, on_closed=None, on_error=None, max_segments=None, get_metadata=None):
         """
         get_target() -> dict(dir=Path, id=str, fstype=str) o None si no hay dónde grabar.
         on_closed(info) se llama al cerrar cada fragmento.
@@ -101,6 +101,7 @@ class SegmentingOutput(_Base):
         self.on_closed = on_closed
         self.on_error = on_error
         self.max_segments = max_segments
+        self.get_metadata = get_metadata
 
         self._q = queue.Queue(maxsize=max(60, int(fps * 20)))
         self._thread = None
@@ -208,6 +209,11 @@ class SegmentingOutput(_Base):
             day_dir.mkdir(parents=True, exist_ok=True)
             c = av.open(str(path), "w", format="mp4",
                         options={"movflags": "frag_keyframe+empty_moov+default_base_moof"})
+            if self.get_metadata:
+                try:
+                    c.metadata.update(self.get_metadata())
+                except Exception:
+                    pass
             st = c.add_stream("h264", rate=self.fps)
             st.codec_context.width, st.codec_context.height = self.size
             st.time_base = Fraction(1, 90000)

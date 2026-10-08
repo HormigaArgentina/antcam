@@ -184,6 +184,23 @@ code{background:var(--bg);padding:1px 5px;border-radius:5px;font-size:.92em;word
     <button class="btn wide" id="b-save-video">Guardar</button>
   </div>
   <div class="card">
+    <h2>Marca en el video</h2>
+    <p class="hint" style="margin-top:0">Texto chico abajo a la izquierda, blanco con borde negro. Queda grabado en la imagen: no se puede sacar después.</p>
+    <label class="check"><input type="checkbox" id="r-fecha"><span>Fecha y hora<br><span class="hint">La hora real de cada cuadro, con segundos.</span></span></label>
+    <label for="r-lugar">Lugar</label>
+    <input id="r-lugar" maxlength="40" placeholder="Ej: Parque Escolar UNER, parcela 3">
+    <label for="r-especie">Especie</label>
+    <input id="r-especie" maxlength="40" placeholder="Ej: Acromyrmex lundii">
+    <label for="r-nota">Nota</label>
+    <input id="r-nota" maxlength="40" placeholder="Ej: nido 12 · camino norte">
+    <div class="stage" style="margin-top:12px;aspect-ratio:4/1;background:#6b5a43">
+      <div id="r-prev" style="position:absolute;left:10px;bottom:8px;color:#fff;font:700 13px/1.25 system-ui,sans-serif;
+        text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000"></div>
+    </div>
+    <p class="hint">Los campos vacíos no aparecen. Lugar, especie y nota también se guardan en <code>indice.csv</code> y dentro de cada .mp4. Se aplica al instante, sin cortar la grabación.</p>
+    <button class="btn wide" id="b-save-rot">Guardar marca</button>
+  </div>
+  <div class="card">
     <h2>Prueba de calidad</h2>
     <p>Graba 3 videos de 1 minuto a 2, 3 y 5 Mbps en la carpeta <code>pruebas_calidad</code> del pendrive. Comparalos en la PC para elegir la calidad mínima que sirve para contar.</p>
     <button class="btn alt wide" id="b-test">Hacer prueba (3 min)</button>
@@ -461,6 +478,10 @@ function fillConfig() {
   opts("c-seg", [5, 10, 15, 30, 60], g.segmento_min, v => v + " minutos");
   $("c-align").checked = g.alinear_reloj; $("c-exp").checked = g.fijar_exposicion;
   $("c-nombre").value = CFG.nombre;
+  const r = CFG.rotulo || {};
+  $("r-fecha").checked = !!r.fecha_hora;
+  $("r-lugar").value = r.lugar || ""; $("r-especie").value = r.especie || ""; $("r-nota").value = r.nota || "";
+  rotPrev();
   $("ap-name").textContent = CFG.nombre; $("ap-pass").value = CFG.wifi.ap_clave;
   $("w-int").textContent = CFG.wifi.reintento_min;
   $("tg-token").value = CFG.avisos.telegram_token; $("tg-int").value = CFG.avisos.intervalo_h;
@@ -476,6 +497,20 @@ function estimate() {
   $("est").textContent = txt;
 }
 $("c-bitrate").onchange = estimate;
+function rotPrev() {
+  const info = ["r-lugar", "r-especie", "r-nota"].map(i => $(i).value.trim()).filter(Boolean).join("  ·  ");
+  const p = n => String(n).padStart(2, "0"), d = new Date();
+  const fecha = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}  ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  const lines = [info, $("r-fecha").checked ? fecha : ""].filter(Boolean);
+  $("r-prev").innerHTML = lines.length ? lines.map(esc).join("<br>") : '<span style="opacity:.6;text-shadow:none">(sin marca)</span>';
+}
+["r-fecha", "r-lugar", "r-especie", "r-nota"].forEach(i => $(i).addEventListener("input", rotPrev));
+setInterval(() => { if (TAB === "video") rotPrev(); }, 1000);
+$("b-save-rot").onclick = () => act($("b-save-rot"), async () => {
+  await api("/api/config", {rotulo: {fecha_hora: $("r-fecha").checked, lugar: $("r-lugar").value,
+    especie: $("r-especie").value, nota: $("r-nota").value}});
+  await loadConfig(); fillConfig();
+}, "Marca guardada");
 $("b-save-video").onclick = () => act($("b-save-video"), async () => {
   await api("/api/config", {grabacion: {ancho: +$("c-ancho").value, fps: +$("c-fps").value, bitrate_mbps: +$("c-bitrate").value,
     segmento_min: +$("c-seg").value, alinear_reloj: $("c-align").checked, fijar_exposicion: $("c-exp").checked}});

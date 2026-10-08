@@ -3,7 +3,8 @@
 1. Primer encendido: si el equipo no tiene nombre, toma uno único del número de serie de la
    placa (ej. AntCam-3F2A), así varios equipos en la misma oficina no se confunden.
 2. Lee el archivo antcam.txt de la tarjeta (se edita desde Windows con el Bloc de notas)
-   y aplica lo que haya cambiado: nombre, redes WiFi, clave de la red propia, Telegram.
+   y aplica lo que haya cambiado: nombre, redes WiFi, clave de la red propia, Telegram y
+   la marca del video (lugar, especie, nota, fecha).
 """
 
 import hashlib
@@ -96,6 +97,16 @@ def main():
         cambios.append("token de Telegram")
     if datos.get("telegram_chat_id"):
         cfg["avisos"]["telegram_chat_id"] = datos["telegram_chat_id"]
+
+    # marca en el video
+    for k in ("lugar", "especie", "nota"):
+        if datos.get(k):
+            cfg["rotulo"][k] = datos[k]
+            cambios.append(f"{k} {datos[k]}")
+    mf = datos.get("marca_fecha", "").lower()
+    if mf in ("si", "sí", "no"):
+        cfg["rotulo"]["fecha_hora"] = mf != "no"
+        cambios.append(f"fecha en el video: {mf}")
 
     viejo_nombre = config.load()["nombre"]
     cfg = config.save(cfg)

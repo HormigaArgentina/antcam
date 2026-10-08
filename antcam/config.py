@@ -20,6 +20,12 @@ DEFAULTS = {
         "rotar_180": False,
         "zona": [0.0, 0.0, 1.0, 1.0],  # x, y, ancho, alto (fracciones del cuadro completo)
     },
+    "rotulo": {                    # marca en el video, abajo a la izquierda
+        "fecha_hora": True,
+        "lugar": "",
+        "especie": "",
+        "nota": "",
+    },
     "almacenamiento": {
         "reserva_gb": 1.0,         # espacio que se deja libre en cada pendrive
     },
@@ -123,6 +129,11 @@ def validate(cfg):
     w = min(max(w, 0.05), 1.0 - x)
     h = min(max(h, 0.05), 1.0 - y)
     g["zona"] = [round(x, 4), round(y, 4), round(w, 4), round(h, 4)]
+
+    r = cfg["rotulo"]
+    r["fecha_hora"] = bool(r.get("fecha_hora"))
+    for k in ("lugar", "especie", "nota"):
+        r[k] = re.sub(r"[\x00-\x1f]+", " ", str(r.get(k) or "")).strip()[:40]
 
     a = cfg["almacenamiento"]
     a["reserva_gb"] = round(_clamp(a.get("reserva_gb"), 0.2, 20, 1.0), 1)

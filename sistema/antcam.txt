@@ -19,6 +19,14 @@ wifi_clave2=
 # Vacío = hormigas2026
 red_propia_clave=
 
+# Marca en el video (abajo a la izquierda). Queda grabada en la imagen
+# y también en el archivo indice.csv del pendrive.
+# marca_fecha: si / no (vacío = si)
+marca_fecha=
+lugar=
+especie=
+nota=
+
 # Avisos por Telegram (opcional)
 telegram_token=
 telegram_chat_id=
