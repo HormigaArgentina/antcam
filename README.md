@@ -206,6 +206,25 @@ Las redes conocidas se agregan desde la página, en **Conexión**.
 
 Para que lleguen a varias personas, creá un grupo, agregá el bot y mandá "hola" en el grupo antes de tocar Vincular.
 
+### Comandos (manejar el equipo desde Telegram)
+
+Cuando el equipo tiene internet, el bot responde a estos comandos (aparecen en el menú `/` del chat):
+
+| Comando | Qué hace |
+|---|---|
+| `/estado` | Grabación, pendrives, días de espacio, temperatura y red |
+| `/foto` | Foto actual de la cámara (con la marca) |
+| `/red` | A qué red está conectado y su dirección (IP y `.local`) |
+| `/tension` | Alimentación de los últimos 30 min, con un mini gráfico 🟩🟥 |
+| `/eventos` | Últimos eventos del registro |
+| `/pausar` · `/grabar` | Detener o reanudar la grabación |
+| `/reiniciar` | Reinicia el equipo (hay que confirmar con `/reiniciar si`) |
+| `/ayuda` | Lista de comandos |
+
+Además, **cada vez que se conecta a una red con internet manda un mensaje con la red y la dirección** para entrar a la página.
+
+Solo responde al chat vinculado (persona o grupo). Los videos no se pueden bajar por Telegram: siguen en el pendrive.
+
 ---
 
 ## LEDs

@@ -17,6 +17,7 @@ from flask import Flask, Response, jsonify, redirect, request, send_file
 
 from . import __version__, config, events, paths
 from .network import AP_IP, Network
+from .bot import Bot
 from .notifier import Notifier, detect_chat
 
 SRC = "web"
@@ -296,7 +297,13 @@ def api_tg_detect():
     try:
         chat_id, name = detect_chat(token)
     except Exception as e:
-        return fail(str(e))
+        # si el bot ya estaba vinculado, los mensajes nuevos los atiende el hilo de comandos:
+        # usar el último chat no vinculado que le escribió
+        cand = notifier.st.get("chat_candidato")
+        if not cand:
+            return fail(str(e))
+        chat_id, name = cand, cand
+    notifier.st.pop("chat_candidato", None)
     config.update({"avisos": {"telegram_token": token, "telegram_chat_id": chat_id}})
     return ok(chat_id=chat_id, nombre=name)
 
@@ -401,6 +408,7 @@ def main():
     paths.ensure_dirs()
     threading.Thread(target=net.loop, daemon=True, name="wifi").start()
     threading.Thread(target=notifier.loop, args=(net,), daemon=True, name="avisos").start()
+    threading.Thread(target=Bot(notifier, net).loop, daemon=True, name="bot").start()
     port = int(os.environ.get("ANTCAM_PORT", "80"))
     app.run(host="0.0.0.0", port=port, threaded=True, use_reloader=False)
 
