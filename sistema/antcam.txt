@@ -15,9 +15,20 @@ wifi_clave=
 wifi_nombre2=
 wifi_clave2=
 
-# Clave de la red WiFi propia del equipo (mínimo 8 caracteres).
-# Vacío = hormigas2026
+# Red WiFi propia del equipo. Por defecto es ABIERTA (sin clave), porque en
+# la Raspberry Pi 3B+ la red propia con clave no deja conectarse a nadie.
+# red_propia_abierta: si / no (vacío = si)
+red_propia_abierta=
+# Clave, solo si red_propia_abierta=no (mínimo 8 caracteres). Vacío = hormigas2026
 red_propia_clave=
+
+# Marca en el video (abajo a la izquierda). Queda grabada en la imagen
+# y también en el archivo indice.csv del pendrive.
+# marca_fecha: si / no (vacío = si)
+marca_fecha=
+lugar=
+especie=
+nota=
 
 # Avisos por Telegram (opcional)
 telegram_token=

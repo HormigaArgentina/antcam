@@ -245,23 +245,46 @@ class Storage:
                 "dias_restantes": round(dias, 1)}
 
 
-def append_index(info, nombre):
+CABECERA_INDICE = ["archivo", "inicio", "fin", "duracion_s", "cuadros", "fps_medio", "mb",
+                   "incompleto", "lugar", "especie", "nota"]
+
+
+def append_index(info, nombre, rotulo=None):
     """Agrega el fragmento al índice CSV de esa carpeta del pendrive."""
-    path = Path(info["archivo"]).parent.parent / "indice.csv"
-    new = not path.exists()
+    import csv
+    import io
     from datetime import datetime
+    path = Path(info["archivo"]).parent.parent / "indice.csv"
+    r = rotulo or {}
     fmt = "%Y-%m-%d %H:%M:%S"
-    line = ",".join([
+    fila = [
         Path(info["archivo"]).parent.name + "/" + Path(info["archivo"]).name,
         datetime.fromtimestamp(info["inicio"]).strftime(fmt),
         datetime.fromtimestamp(info["fin"]).strftime(fmt),
         str(info["duracion_s"]), str(info["cuadros"]), str(info["fps_medio"]),
         str(round(info["bytes"] / 1e6, 1)), "si" if info["incompleto"] else "no",
-    ])
+        r.get("lugar", ""), r.get("especie", ""), r.get("nota", ""),
+    ]
     try:
-        with open(path, "a") as f:
-            if new:
-                f.write("archivo,inicio,fin,duracion_s,cuadros,fps_medio,mb,incompleto\n")
-            f.write(line + "\n")
+        if path.exists():
+            with open(path, newline="") as f:
+                primera = f.readline()
+            if "lugar" not in primera:  # índice de una versión anterior: agregar columnas
+                with open(path, newline="") as f:
+                    viejas = list(csv.reader(f))[1:]
+                buf = io.StringIO()
+                w = csv.writer(buf, lineterminator="\n")
+                w.writerow(CABECERA_INDICE)
+                for v in viejas:
+                    w.writerow(v + [""] * (len(CABECERA_INDICE) - len(v)))
+                tmp = path.with_suffix(".tmp")
+                tmp.write_text(buf.getvalue())
+                os.replace(tmp, path)
+        nuevo = not path.exists()
+        with open(path, "a", newline="") as f:
+            w = csv.writer(f, lineterminator="\n")
+            if nuevo:
+                w.writerow(CABECERA_INDICE)
+            w.writerow(fila)
     except OSError:
         pass

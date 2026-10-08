@@ -67,5 +67,5 @@ echo
 echo " Después abrí en el navegador (misma red WiFi):"
 echo "     http://$HOST.local"
 echo " Sin WiFi conocida, el equipo crea su propia red con su nombre"
-echo " (clave por defecto: hormigas2026) y se entra a http://10.42.0.1"
+echo " (abierta, sin clave) y se entra a http://10.42.0.1"
 echo "=========================================================="

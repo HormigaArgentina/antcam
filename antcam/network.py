@@ -178,22 +178,34 @@ class Network:
 
     # ------------------------------------------------------------ red propia
     def ensure_ap_profile(self):
+        """Perfil de la red propia. Por defecto es ABIERTA (sin clave): en la Pi 3B+ el chip WiFi
+        no completa la conexión WPA2 en modo red propia (probado en el equipo: la red se ve,
+        el celular/Mac intentan y nunca entran). Con clave se puede activar si en otra placa anda."""
         if paths.SIM:
             return
         cfg = config.load()
         ssid, clave = cfg["nombre"], cfg["wifi"]["ap_clave"]
-        common = ["802-11-wireless.ssid", ssid, "wifi-sec.psk", clave]
-        code, _, _ = _nm("connection", "show", AP_CON)
+        abierta = cfg["wifi"].get("ap_abierta", True)
+        seguridad = [] if abierta else [
+            "wifi-sec.key-mgmt", "wpa-psk", "wifi-sec.psk", clave,
+            "wifi-sec.proto", "rsn", "wifi-sec.pairwise", "ccmp", "wifi-sec.group", "ccmp",
+            "wifi-sec.pmf", "disable"]
+        code, actual, _ = _nm("-g", "802-11-wireless-security.key-mgmt", "connection", "show", AP_CON)
         if code == 0:
-            _nm("connection", "modify", AP_CON, *common)
-            return
+            tiene_clave = bool(actual.strip())
+            if tiene_clave == (not abierta):
+                args = ["802-11-wireless.ssid", ssid, "802-11-wireless.powersave", "2"]
+                if not abierta:
+                    args += ["wifi-sec.psk", clave]
+                _nm("connection", "modify", AP_CON, *args)
+                return
+            _nm("connection", "delete", AP_CON)  # cambió abierta <-> con clave: se rehace
         _nm("connection", "add", "type", "wifi", "ifname", IFACE, "con-name", AP_CON,
             "autoconnect", "no", "ssid", ssid,
             "802-11-wireless.mode", "ap", "802-11-wireless.band", "bg", "802-11-wireless.channel", "6",
+            "802-11-wireless.powersave", "2",
             "ipv4.method", "shared", "ipv4.addresses", f"{AP_IP}/24", "ipv6.method", "disabled",
-            "wifi-sec.key-mgmt", "wpa-psk", "wifi-sec.psk", clave,
-            "wifi-sec.proto", "rsn", "wifi-sec.pairwise", "ccmp", "wifi-sec.group", "ccmp",
-            "wifi-sec.pmf", "disable")
+            *seguridad)
 
     def start_ap(self, hold_min=0):
         if hold_min:

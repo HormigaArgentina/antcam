@@ -20,10 +20,20 @@ DEFAULTS = {
         "rotar_180": False,
         "zona": [0.0, 0.0, 1.0, 1.0],  # x, y, ancho, alto (fracciones del cuadro completo)
     },
+    "rotulo": {                    # marca en el video, abajo a la izquierda
+        "fecha_hora": True,
+        "lugar": "",
+        "especie": "",
+        "nota": "",
+    },
+    "energia": {
+        "registro_min": 5,         # cada cuánto se anota la alimentación en energia.csv
+    },
     "almacenamiento": {
         "reserva_gb": 1.0,         # espacio que se deja libre en cada pendrive
     },
     "wifi": {
+        "ap_abierta": True,        # red propia sin clave (con clave no conecta en la Pi 3B+)
         "ap_clave": "hormigas2026",
         "reintento_min": 15,       # cada cuánto busca redes conocidas estando en modo propio
     },
@@ -42,6 +52,7 @@ DEFAULTS = {
 ANCHOS = [640, 960, 1280, 1600, 1920]
 FPS = [10, 15, 20, 25, 30]
 SEGMENTOS = [5, 10, 15, 30, 60]
+REGISTRO_ENERGIA = [1, 5, 10, 15, 30, 60]
 
 
 def _merge(base, extra):
@@ -124,12 +135,21 @@ def validate(cfg):
     h = min(max(h, 0.05), 1.0 - y)
     g["zona"] = [round(x, 4), round(y, 4), round(w, 4), round(h, 4)]
 
+    r = cfg["rotulo"]
+    r["fecha_hora"] = bool(r.get("fecha_hora"))
+    for k in ("lugar", "especie", "nota"):
+        r[k] = re.sub(r"[\x00-\x1f]+", " ", str(r.get(k) or "")).strip()[:40]
+
+    e = cfg["energia"]
+    e["registro_min"] = int(_closest(e.get("registro_min"), REGISTRO_ENERGIA, 5))
+
     a = cfg["almacenamiento"]
     a["reserva_gb"] = round(_clamp(a.get("reserva_gb"), 0.2, 20, 1.0), 1)
 
     wf = cfg["wifi"]
     clave = str(wf.get("ap_clave") or "")
     wf["ap_clave"] = clave if 8 <= len(clave) <= 63 else d["wifi"]["ap_clave"]
+    wf["ap_abierta"] = bool(wf.get("ap_abierta", True))
     wf["reintento_min"] = int(_clamp(wf.get("reintento_min"), 5, 240, 15))
 
     av = cfg["avisos"]
