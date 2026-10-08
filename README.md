@@ -243,6 +243,7 @@ Un módulo **DS3231 para Raspberry Pi** (en Mercado Libre: "módulo RTC DS3231 r
 | "Baja tensión" | Cambiá la fuente por una de 5 V / 2.5–3 A. Con regulador, ajustalo a 5.1–5.2 V. |
 | Temperatura alta | Dale sombra a la caja; cubierta clara o aluminizada por fuera. |
 | Error de memoria de la cámara al iniciar | En `/boot/firmware/config.txt` cambiá `dtoverlay=vc4-kms-v3d` por `dtoverlay=vc4-kms-v3d,cma-256` y reiniciá. |
+| Cualquier otro problema | En la página: **Sistema → Descargar diagnóstico**, y mandá ese archivo a quien te ayuda. |
 | Ver qué está pasando por dentro | `journalctl -u antcam-grabador -f` (grabación) o `journalctl -u antcam-web -f` (página y WiFi). |
 
 ---

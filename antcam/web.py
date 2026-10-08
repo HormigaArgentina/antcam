@@ -306,6 +306,60 @@ def api_tg_test():
     return fail(notifier.last_error or "No se pudo enviar")
 
 
+# ------------------------------------------------------------------ diagnóstico
+DIAG_CMDS = [
+    ("Sistema", ["sh", "-c", "cat /etc/os-release | head -2; uname -a; uptime; "
+                             "cat /proc/device-tree/model 2>/dev/null; echo"]),
+    ("Cámaras detectadas", ["rpicam-hello", "--list-cameras"]),
+    ("Tensión / temperatura", ["sh", "-c", "vcgencmd get_throttled; vcgencmd measure_temp; vcgencmd measure_volts"]),
+    ("Discos y pendrives", ["sh", "-c", "lsblk -o NAME,FSTYPE,LABEL,SIZE,MOUNTPOINT,TRAN; echo; df -h"]),
+    ("Red", ["sh", "-c", "nmcli device status; echo; nmcli -t -f NAME,TYPE,AUTOCONNECT connection show; "
+                         "echo; hostname -I"]),
+    ("Hora", ["timedatectl"]),
+    ("Servicios", ["systemctl", "--no-pager", "status", "antcam-grabador", "antcam-web", "antcam-arranque"]),
+    ("Registro del grabador", ["journalctl", "--no-pager", "-n", "400", "-u", "antcam-grabador"]),
+    ("Registro de la página / WiFi", ["journalctl", "--no-pager", "-n", "200", "-u", "antcam-web"]),
+    ("Registro del arranque", ["journalctl", "--no-pager", "-n", "60", "-u", "antcam-arranque"]),
+    ("Mensajes del sistema (cámara, USB, energía)", ["sh", "-c",
+        "dmesg -T | grep -iE 'imx|unicam|camera|usb|voltage|error|fail' | tail -80"]),
+]
+
+
+@app.get("/diagnostico.txt")
+def diagnostico():
+    cfg = config.load()
+    seguro = json.loads(json.dumps(cfg))
+    for k in ("telegram_token",):
+        if seguro["avisos"].get(k):
+            seguro["avisos"][k] = seguro["avisos"][k][:6] + "…(oculto)"
+    for k in ("ap_clave",):
+        seguro["wifi"][k] = "(oculta)"
+    seguro["acceso"]["clave"] = "(oculta)" if seguro["acceso"]["clave"] else ""
+    out = [f"DIAGNÓSTICO ANTCAM {__version__} - {cfg['nombre']} - {time.strftime('%Y-%m-%d %H:%M:%S')}", ""]
+
+    def sec(t, body):
+        out.extend(["=" * 70, t, "=" * 70, body.rstrip(), ""])
+
+    sec("Estado del grabador", json.dumps(recorder_status(), indent=1, ensure_ascii=False))
+    sec("Red (AntCam)", json.dumps(net.status(), ensure_ascii=False))
+    sec("Configuración", json.dumps(seguro, indent=1, ensure_ascii=False))
+    sec("Eventos (últimos 150)", "\n".join(
+        f"{time.strftime('%d/%m %H:%M:%S', time.localtime(e['t']))} [{e['nivel']}] {e['msg']}"
+        for e in reversed(events.tail(150, "debug"))))
+    for title, cmd in DIAG_CMDS:
+        if paths.SIM:
+            sec(title, "(simulación)")
+            continue
+        try:
+            r = subprocess.run(cmd, capture_output=True, text=True, timeout=20)
+            sec(title, (r.stdout + r.stderr) or "(sin salida)")
+        except Exception as e:
+            sec(title, f"(no se pudo ejecutar: {e})")
+    name = f"diagnostico_{config.slug(cfg['nombre'])}_{time.strftime('%Y%m%d_%H%M')}.txt"
+    return Response("\n".join(out), mimetype="text/plain",
+                    headers={"Content-Disposition": f'attachment; filename="{name}"'})
+
+
 # ------------------------------------------------------------------ sistema
 @app.post("/api/sistema/<accion>")
 def api_system(accion):
