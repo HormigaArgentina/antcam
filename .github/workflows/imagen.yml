@@ -61,6 +61,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: ${{ steps.build.outputs.image-path }}
+          prerelease: ${{ contains(github.ref_name, '-') }}
           body: |
             Imagen lista de AntCam para Raspberry Pi 3B+ / 3B / 4 / Zero 2 W con cámara v2.
 
