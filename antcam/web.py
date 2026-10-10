@@ -307,6 +307,17 @@ def api_wifi_try():
     return ok()
 
 
+@app.post("/api/wifi/conectar")
+def api_wifi_connect():
+    nombre = (request.get_json(force=True) or {}).get("nombre", "")
+    if not any(k["nombre"] == nombre for k in net.known()):
+        return fail("Esa red no está guardada")
+    if net.busy:
+        return fail("El equipo está ocupado cambiando de red. Esperá un momento.")
+    threading.Thread(target=net.connect_to, args=(nombre,), daemon=True).start()
+    return ok()
+
+
 @app.post("/api/wifi/propia")
 def api_wifi_ap():
     threading.Thread(target=net.start_ap, kwargs={"hold_min": 30}, daemon=True).start()

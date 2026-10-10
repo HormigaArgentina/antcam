@@ -267,7 +267,7 @@ code{background:var(--bg);padding:1px 5px;border-radius:5px;font-size:.92em;word
       <button class="btn alt small" id="b-w-try">Buscar redes conocidas ahora</button>
       <button class="btn alt small" id="b-w-ap">Pasar a red propia</button>
     </div>
-    <p class="hint">Si no encuentra ninguna red conocida, el equipo crea su propia red WiFi. Cada <span id="w-int">15</span> min (si nadie está conectado) vuelve a buscar.</p>
+    <p class="hint">Si no encuentra ninguna red conocida, el equipo crea su propia red WiFi. Mientras haya alguien conectado a esa red no cambia solo (para no cortarte la página): usá <b>Conectar</b> en la red que quieras. Si no hay nadie conectado, cada <span id="w-int">15</span> min busca redes conocidas.</p>
   </div>
   <div class="card">
     <h2>Redes conocidas</h2>
@@ -691,9 +691,14 @@ window.addEventListener("resize", draw);
 async function loadWifi(scan) {
   try {
     const w = await api("/api/wifi" + (scan ? "?buscar=1" : ""));
-    $("w-known").innerHTML = w.conocidas.length ? w.conocidas.map(k =>
-      `<li><span>📶 ${esc(k.ssid)}</span><button class="btn alt small" data-del="${esc(k.nombre)}">Borrar</button></li>`).join("")
-      : '<li class="hint">Ninguna todavía</li>';
+    const r = (ST && ST.red) || {};
+    $("w-known").innerHTML = w.conocidas.length ? w.conocidas.map(k => {
+      const actual = r.modo === "cliente" && r.ssid === k.ssid;
+      return `<li><span>📶 ${esc(k.ssid)}${actual ? ' <span class="tag ok">conectado</span>' : ""}</span>
+        <span class="row" style="gap:6px;flex-wrap:nowrap">
+        ${actual ? "" : `<button class="btn small" data-con="${esc(k.nombre)}" data-ssid="${esc(k.ssid)}">Conectar</button>`}
+        <button class="btn alt small" data-del="${esc(k.nombre)}">Borrar</button></span></li>`;
+    }).join("") : '<li class="hint">Ninguna todavía</li>';
     $("w-vis").innerHTML = (w.visibles || []).map(v => `<option value="${esc(v.ssid)}">`).join("");
   } catch (e) {}
   renderWifiState();
@@ -706,6 +711,10 @@ function renderWifiState() {
   else if (r.modo === "cliente") h = `<p>Conectado a <b>${esc(r.ssid)}</b> · ${r.internet ? "✅ con internet" : "sin internet"}<br><span class="hint">Desde esa misma red se entra a <code>${esc(r.direccion)}</code> (o <code>http://${esc(r.ip)}</code>)</span></p>`;
   else if (r.modo === "propia") h = `<p>Red propia <b>${esc(r.ssid)}</b> activa · ${r.clientes} conectado(s)<br><span class="hint">Sin internet: los avisos se guardan y se mandan cuando haya conexión.</span></p>`;
   else h = `<p>Sin red. En menos de un minuto crea su red propia.</p>`;
+  const ui = r.ultimo_intento;
+  if (ui && !ui.ok && Date.now() / 1000 - ui.t < 1800)
+    h += `<div class="notice warn">⚠️ A las ${hhmm(ui.t)} no se pudo conectar a <b>${esc(ui.ssid)}</b>. Revisá que esté al alcance y que la clave sea correcta (si no, borrala y agregala de nuevo).</div>`;
+  if ($("w-state")._h !== h) { $("w-state")._h = h; loadWifi(); }
   $("w-state").innerHTML = h;
   const a = ST.avisos;
   $("tg-state").innerHTML = a.configurado
@@ -713,6 +722,17 @@ function renderWifiState() {
     : `<div class="notice warn">Todavía no está vinculado.</div>`;
 }
 $("w-known").addEventListener("click", e => {
+  const c = e.target.closest("[data-con]");
+  if (c) {
+    const ssid = c.dataset.ssid;
+    const dir = "http://" + (CFG ? CFG.nombre.toLowerCase().replace(/[^a-z0-9-]+/g, "-") : "antcam") + ".local";
+    const msg = ST && ST.red.modo === "propia"
+      ? `El equipo va a apagar su red propia y conectarse a "${ssid}".\n\nVas a perder esta página: conectá tu celular o PC a "${ssid}" y entrá a ${dir}\n\nSi no puede conectarse, en 1–2 minutos vuelve a crear su red propia. La grabación no se corta.`
+      : `El equipo se va a conectar a "${ssid}". Si estás en otra red, vas a perder esta página por un momento. La grabación no se corta.`;
+    if (!confirm(msg)) return;
+    act(c, () => api("/api/wifi/conectar", {nombre: c.dataset.con}), "Conectando a " + ssid + "…", 6000);
+    return;
+  }
   const b = e.target.closest("[data-del]"); if (!b || !confirm("¿Borrar la red " + b.dataset.del + "?")) return;
   act(b, async () => { await api("/api/wifi/borrar", {nombre: b.dataset.del}); loadWifi(); }, "Red borrada");
 });

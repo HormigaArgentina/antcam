@@ -198,7 +198,9 @@ Cada 5 minutos (configurable) se anota en `energia.csv`, en la Pi y en el pendri
 - **No ve ninguna:** a los ~90 s crea su propia red **AntCam-01** y la página está en `http://10.42.0.1`.
 - **Mientras está en red propia y nadie está conectado:** cada 15 min apaga la red propia ~1 min para buscar redes conocidas.
 
-Las redes conocidas se agregan desde la página, en **Conexión**.
+Las redes conocidas se agregan desde la página, en **Conexión**. Para cambiar de red en el momento, tocá **Conectar** al lado de la red. Si estabas en la red propia, vas a perder la página: conectate vos también a esa red y entrá a `http://antcam-xxxx.local`. Si el equipo no puede conectarse (fuera de alcance o clave mal), en 1–2 minutos vuelve a crear su red propia y te avisa qué pasó.
+
+> Mientras haya alguien conectado a la red propia, el equipo **no cambia de red solo**, para no cortarte la página. Por eso a veces "no se conectaba": usá **Conectar**.
 
 > **Tip:** guardá el **hotspot de tu celular** como red conocida. En el campo, si tu teléfono tiene datos, compartí internet: el equipo se conecta, manda los avisos y ves la página desde el celular.
 

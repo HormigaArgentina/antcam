@@ -47,6 +47,7 @@ class Network:
         self.busy = None            # texto mientras busca redes
         self.internet = False
         self.scan = []
+        self.ultimo_intento = None  # resultado del último botón Conectar
         self._ap_since = 0
         self._lost_since = None
         self._hold_ap_until = 0
@@ -223,6 +224,46 @@ class Network:
             events.log("error", f"No se pudo crear la red propia: {err}", SRC)
             return False
 
+    def connect_to(self, nombre):
+        """Conectarse a una red conocida elegida por el usuario (botón Conectar).
+
+        Si no puede (fuera de alcance o clave mal), vuelve a crear la red propia
+        y la mantiene 10 min para que el usuario pueda volver a entrar.
+        """
+        k = next((k for k in self.known() if k["nombre"] == nombre), None)
+        if not k:
+            return False
+        ssid = k["ssid"]
+        if paths.SIM:
+            self.ultimo_intento = {"ssid": ssid, "ok": True, "t": time.time()}
+            return True
+        with self._lock:
+            self.busy = f"Conectando a {ssid}…"
+            ok = False
+            try:
+                if self.mode == "propia":
+                    _nm("connection", "down", AP_CON)
+                    time.sleep(3)
+                for intento in range(2):
+                    code, _, err = _nm("connection", "up", nombre, timeout=45)
+                    if code == 0:
+                        ok = True
+                        break
+                    _nm("device", "wifi", "rescan", timeout=15)  # a veces la red no estaba en la lista
+                    time.sleep(5)
+            finally:
+                self.busy = None
+                self.update()
+        self.ultimo_intento = {"ssid": ssid, "ok": ok, "t": time.time()}
+        if ok:
+            events.log("info", f"Conectado a la red {ssid} (elegida desde la página)", SRC)
+            return True
+        events.log("aviso", f"No se pudo conectar a {ssid}: ¿está al alcance y la clave es correcta? "
+                            "Se volvió a crear la red propia.", SRC)
+        self._ap_since = 0
+        self.start_ap(hold_min=10)
+        return False
+
     def try_known(self):
         """Apaga la red propia un momento y prueba conectarse a una red conocida."""
         if paths.SIM:
@@ -303,4 +344,5 @@ class Network:
         addr = {"cliente": f"http://{config.slug(config.load()['nombre'])}.local",
                 "propia": f"http://{AP_IP}"}.get(self.mode)
         return {"modo": self.mode, "ssid": self.ssid, "ip": self.ip, "clientes": self.clients,
-                "buscando": self.busy, "internet": self.internet, "direccion": addr}
+                "buscando": self.busy, "internet": self.internet, "direccion": addr,
+                "ultimo_intento": self.ultimo_intento}
