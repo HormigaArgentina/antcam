@@ -61,6 +61,16 @@ input[type=checkbox]{width:24px;height:24px;min-height:0;accent-color:var(--acce
 .check{display:flex;gap:12px;align-items:flex-start;margin:14px 0;font-weight:600}
 .check .hint{font-weight:400}
 .drive{border:1.5px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+.wz-dots{display:flex;gap:6px;margin-bottom:16px}.wz-dots i{flex:1;height:6px;border-radius:4px;background:var(--line)}.wz-dots i.on{background:var(--accent)}
+.wz-n{font-size:13px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+.wz h3{font-size:22px;line-height:1.2;margin:4px 0 10px}
+.wz .btn+.btn{margin-top:10px}
+.checks{list-style:none;padding:0;margin:8px 0 16px}
+.checks li{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line)}
+.checks li:last-child{border:0}
+.checks .ic{font-size:22px;line-height:1;flex:none;width:26px;text-align:center}
+.checks b{display:block}
+.checks label{display:flex;gap:12px;align-items:flex-start;font-weight:600;margin:0;cursor:pointer}
 .drive.cur{border-color:var(--ok);background:var(--ok-bg)}
 .bar{height:10px;background:var(--line);border-radius:6px;overflow:hidden;margin:8px 0 4px}
 .bar i{display:block;height:100%;background:var(--accent)}
@@ -106,6 +116,7 @@ code{background:var(--bg);padding:1px 5px;border-radius:5px;font-size:.92em;word
 <div class="brand"><img src="/logo.png" alt="Laboratorio de Ecología de Hormigas · Facultad de Ciencias Agropecuarias, UNER"></div>
 <!-- ============================ ESTADO -->
 <section id="s-estado" class="on">
+  <div id="setup-banner"></div>
   <div id="notices"></div>
   <div class="card hero" id="hero">
     <div class="big" id="hero-t">Conectando…</div>
@@ -113,6 +124,7 @@ code{background:var(--bg);padding:1px 5px;border-radius:5px;font-size:.92em;word
     <div class="row" style="margin-top:14px">
       <button class="btn" id="b-rec">…</button>
       <button class="btn alt" id="b-ver">Ver cámara</button>
+      <button class="btn alt" id="b-nueva">Nueva instalación</button>
     </div>
   </div>
 
@@ -194,21 +206,9 @@ code{background:var(--bg);padding:1px 5px;border-radius:5px;font-size:.92em;word
 
 <!-- ============================ VIDEO -->
 <section id="s-video">
-  <div class="card">
-    <h2>Calidad del video</h2>
-    <label for="c-ancho">Ancho del video</label>
-    <select id="c-ancho"></select>
-    <p class="hint">El alto sale de la forma de la zona elegida. Máximo 1920×1080.</p>
-    <label for="c-fps">Cuadros por segundo</label>
-    <select id="c-fps"></select>
-    <label for="c-bitrate">Calidad (tasa de grabación)</label>
-    <select id="c-bitrate"></select>
-    <p class="hint" id="est"></p>
-    <label for="c-seg">Largo de cada fragmento</label>
-    <select id="c-seg"></select>
-    <label class="check"><input type="checkbox" id="c-align"><span>Cortar en horas redondas<br><span class="hint">Los fragmentos empiezan a las 08:00, 08:30… Más fácil para analizar.</span></span></label>
-    <label class="check"><input type="checkbox" id="c-exp"><span>Fijar exposición<br><span class="hint">Congela brillo y color a los 10 s. Útil con luz constante para que el seguimiento no vea cambios.</span></span></label>
-    <button class="btn wide" id="b-save-video">Guardar</button>
+  <div class="notice info row" id="wz-back-video" hidden style="justify-content:space-between">
+    <span>Estás en el asistente de instalación.</span>
+    <button class="btn small" id="b-wz-back">Volver al asistente</button>
   </div>
   <div class="card">
     <h2>Marca en el video</h2>
@@ -228,6 +228,22 @@ code{background:var(--bg);padding:1px 5px;border-radius:5px;font-size:.92em;word
     </div>
     <p class="hint">Los campos vacíos no aparecen. Lugar, especie y nota también se guardan en <code>indice.csv</code> y dentro de cada .mp4. Se aplica al instante, sin cortar la grabación.</p>
     <button class="btn wide" id="b-save-rot">Guardar marca</button>
+  </div>
+  <div class="card">
+    <h2>Calidad del video</h2>
+    <label for="c-ancho">Ancho del video</label>
+    <select id="c-ancho"></select>
+    <p class="hint">El alto sale de la forma de la zona elegida. Máximo 1920×1080.</p>
+    <label for="c-fps">Cuadros por segundo</label>
+    <select id="c-fps"></select>
+    <label for="c-bitrate">Calidad (tasa de grabación)</label>
+    <select id="c-bitrate"></select>
+    <p class="hint" id="est"></p>
+    <label for="c-seg">Largo de cada fragmento</label>
+    <select id="c-seg"></select>
+    <label class="check"><input type="checkbox" id="c-align"><span>Cortar en horas redondas<br><span class="hint">Los fragmentos empiezan a las 08:00, 08:30… Más fácil para analizar.</span></span></label>
+    <label class="check"><input type="checkbox" id="c-exp"><span>Fijar exposición<br><span class="hint">Congela brillo y color a los 10 s. Útil con luz constante para que el seguimiento no vea cambios.</span></span></label>
+    <button class="btn wide" id="b-save-video">Guardar</button>
   </div>
   <div class="card">
     <h2>Prueba de calidad</h2>
@@ -294,6 +310,14 @@ code{background:var(--bg);padding:1px 5px;border-radius:5px;font-size:.92em;word
 </section>
 
 <!-- ============================ SISTEMA -->
+<section id="s-asist">
+  <div class="card wz">
+    <div class="wz-dots" id="wz-dots"></div>
+    <div id="wz-body"></div>
+  </div>
+  <button class="btn alt wide" id="wz-exit">Salir del asistente</button>
+</section>
+
 <section id="s-sis">
   <div class="card">
     <h2>Hora</h2>
@@ -380,8 +404,8 @@ function dur(s) {
   const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
   return d ? `${d} d ${h} h` : h ? `${h} h ${m} min` : `${m} min`;
 }
-const hhmm = t => new Date(t * 1000).toLocaleTimeString("es-AR", {hour: "2-digit", minute: "2-digit"});
-const ddhh = t => new Date(t * 1000).toLocaleString("es-AR", {day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"});
+const hhmm = t => new Date(t * 1000).toLocaleTimeString("es-AR", {hour: "2-digit", minute: "2-digit", hour12: false});
+const ddhh = t => new Date(t * 1000).toLocaleString("es-AR", {day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false});
 
 /* ---------- pestañas ---------- */
 $("nav").addEventListener("click", e => {
@@ -392,6 +416,8 @@ function showTab(s) {
   TAB = s;
   document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b.dataset.s === s));
   document.querySelectorAll("section").forEach(x => x.classList.toggle("on", x.id === "s-" + s));
+  $("wz-back-video").hidden = !(WZ.on && s === "video");
+  if (s === "asist") wzRender();
   if (s === "red") loadWifi(true);
   if (s === "sis") loadEvents();
   if (s === "video" || s === "red") fillConfig();
@@ -419,7 +445,7 @@ function render() {
   $("f-ver").textContent = s.version || "–";
   if (RESEARCHGATE_URL) { $("f-rg-a").href = RESEARCHGATE_URL; $("f-rg").hidden = false; }
   document.title = s.nombre;
-  $("hclock").textContent = new Date(s.hora.pi * 1000).toLocaleTimeString("es-AR", {hour: "2-digit", minute: "2-digit"});
+  $("hclock").textContent = new Date(s.hora.pi * 1000).toLocaleTimeString("es-AR", {hour: "2-digit", minute: "2-digit", hour12: false});
   let cls, title, sub = "";
   if (!g || g.viejo) { cls = "bad"; title = "El grabador no responde"; sub = "Se reinicia solo en segundos. Si sigue así, reiniciá el equipo."; }
   else {
@@ -428,7 +454,11 @@ function render() {
     if (g.estado === "grabando" && g.fragmento_actual) sub = "Fragmento actual desde las " + hhmm(g.fragmento_actual.inicio) + " · " + g.fragmento_actual.mb + " MB";
     if (g.estado === "encuadre" && g.encuadre_hasta) sub += ` (vuelve a grabar sola a las ${hhmm(g.encuadre_hasta)})`;
   }
+  const ins = s.instalacion || {};
+  if (ins.lugar && g && !g.viejo) sub = "📍 " + ins.lugar + (sub ? " · " + sub : "");
   $("hero").className = "card hero " + cls; $("hero-t").textContent = title; $("hero-s").textContent = sub;
+  renderBanner(ins);
+  if (TAB === "asist" && WZ.step === 2) wzRender();
   $("hdot").className = "dot " + cls;
   const enabled = CFG ? CFG.grabacion.habilitada : true;
   $("b-rec").textContent = enabled ? "Detener grabación" : "Iniciar grabación";
@@ -608,10 +638,14 @@ $("b-fr-start").onclick = () => act($("b-fr-start"), async () => {
   refreshImg($("frimg"), () => TAB === "encuadre" && !$("fr-on").hidden);
   draw();
 }, "Cargando la imagen…");
-$("b-fr-cancel").onclick = () => act(null, async () => { await api("/api/encuadre", {on: false}); $("fr-on").hidden = true; $("fr-off").hidden = false; }, "Volviendo a grabar");
+$("b-fr-cancel").onclick = () => act(null, async () => {
+  await api("/api/encuadre", {on: false}); $("fr-on").hidden = true; $("fr-off").hidden = false;
+  if (WZ.on) { showTab("asist"); wzGo(3); }
+}, "Volviendo a grabar");
 $("b-fr-save").onclick = () => act($("b-fr-save"), async () => {
   const r = await api("/api/zona", {zona: frRoi, rotar_180: $("rot").checked});
-  await loadConfig(); $("fr-on").hidden = true; $("fr-off").hidden = false; showTab("estado");
+  await loadConfig(); $("fr-on").hidden = true; $("fr-off").hidden = false;
+  if (WZ.on) { WZ.zonaOk = true; showTab("asist"); wzGo(4); } else showTab("estado");
   return r;
 }, "Zona guardada. Grabando.");
 $("b-full").onclick = () => { frRoi = [0, 0, 1, 1]; frDirty = true; draw(); };
@@ -735,11 +769,177 @@ $("b-reboot").onclick = () => {
   act($("b-reboot"), () => api("/api/sistema/reiniciar", {}), "Reiniciando…");
 };
 
+/* ---------- asistente de instalación ---------- */
+let WZ = {on: false, step: 1};
+function outSize(zona, ancho) {
+  const aspect = (zona[2] * 4) / (zona[3] * 3);
+  let ow = ancho, oh = ow / aspect;
+  if (oh > 1080) { oh = 1080; ow = oh * aspect; }
+  return [Math.min(1920, Math.round(ow / 32) * 32), Math.min(1080, Math.round(oh / 16) * 16)];
+}
+const WZ_TOTAL = 5;
+function wzOpen() { WZ = {on: true, step: 1, zonaOk: false}; showTab("asist"); }
+function wzGo(n) { WZ.step = n; wzRender(); window.scrollTo(0, 0); }
+function wzClose() { WZ.on = false; showTab("estado"); }
+
+function renderBanner(ins) {
+  let h = "";
+  if (ins.preguntar === "configurar") {
+    h = `<div class="card hero warn"><div class="big" style="font-size:21px">📍 Falta configurar la instalación</div>
+      <div class="sub">El equipo ya está grabando, pero con la imagen completa y sin lugar ni marca. El asistente te guía en 5 pasos (2 minutos).</div>
+      <div class="row" style="margin-top:12px"><button class="btn" data-wz="1">Configurar instalación</button></div></div>`;
+  } else if (ins.preguntar === "nuevo_encendido") {
+    h = `<div class="card hero warn"><div class="big" style="font-size:20px">¿Lo instalaste en un lugar nuevo?</div>
+      <div class="sub">El equipo se encendió y siguió con la configuración anterior: <b>${esc(ins.lugar || "lugar sin nombre")}</b>, configurada el ${ddhh(ins.confirmada)} h.</div>
+      <div class="row" style="margin-top:12px"><button class="btn" data-wz="1">Sí, lugar nuevo</button>
+      <button class="btn alt" data-mismo="1">No, es el mismo lugar</button></div></div>`;
+  }
+  if ($("setup-banner")._h !== h) { $("setup-banner").innerHTML = h; $("setup-banner")._h = h; }
+}
+$("setup-banner").addEventListener("click", e => {
+  if (e.target.closest("[data-wz]")) wzOpen();
+  else if (e.target.closest("[data-mismo]"))
+    act(null, async () => { await api("/api/instalacion", {accion: "mismo_lugar"}); poll(); }, "Listo: sigue grabando igual");
+});
+$("b-nueva").onclick = () => wzOpen();
+$("wz-exit").onclick = () => wzClose();
+$("b-wz-back").onclick = () => { showTab("asist"); wzGo(4); };
+
+function wzChecks() {
+  const g = ST && ST.grabador, h = ST && ST.hora, out = [];
+  const camOk = g && !g.viejo && !(g.camara && g.camara.error) && g.estado !== "error";
+  out.push({ok: camOk ? "ok" : "bad", t: "Cámara", d: camOk ? "Funcionando" : ((g && g.camara && g.camara.error) || "No responde. Revisá el cable plano.")});
+  const a = (g && g.almacenamiento) || {pendrives: []};
+  const pOk = a.pendrives.some(p => p.estado === "ok");
+  out.push({ok: pOk ? "ok" : "bad", t: "Pendrive",
+    d: pOk ? `${a.libre_total_gb} GB libres · alcanza para ~${a.dias_restantes} días` : (a.pendrives.length ? "Lleno o con error: conectá otro" : "No hay ninguno: conectá un pendrive")});
+  const hOk = h && (h.ntp || h.rtc || h.ajustada_celular);
+  out.push({ok: hOk ? "ok" : "warn", t: "Hora", d: (h ? new Date(h.pi * 1000).toLocaleString("es-AR") : "–") + (hOk ? "" : " · no verificada: revisá que coincida con tu celular")});
+  const sy = (g && g.sistema) || {};
+  out.push({ok: sy.baja_tension_ahora ? "bad" : (sy.hubo_baja_tension ? "warn" : "ok"), t: "Alimentación",
+    d: sy.baja_tension_ahora ? "Baja tensión ahora: la fuente no alcanza" : (sy.hubo_baja_tension ? "Hubo bajas de tensión: conviene revisar la fuente" : "OK")});
+  return out;
+}
+
+function wzRender() {
+  if (!WZ.on) { $("wz-body").innerHTML = '<p>El asistente no está activo.</p><button class="btn wide" onclick="wzOpen()">Empezar instalación nueva</button>'; return; }
+  $("wz-dots").innerHTML = Array.from({length: WZ_TOTAL}, (_, i) => `<i class="${i < WZ.step ? "on" : ""}"></i>`).join("");
+  $("wz-exit").hidden = WZ.step > WZ_TOTAL;
+  const n = `<div class="wz-n">Paso ${WZ.step} de ${WZ_TOTAL}</div>`;
+  const b = $("wz-body");
+  const nombre = CFG ? CFG.nombre : "";
+  if (WZ.step === 1) {
+    const r = (CFG && CFG.rotulo) || {};
+    b.innerHTML = `${n}<h3>Lugar y marca en el video</h3>
+      <p>Estos datos se imprimen abajo en el video y se guardan en <code>indice.csv</code>. Revisalos en cada lugar nuevo.</p>
+      <label for="wz-lugar">Lugar</label>
+      <input id="wz-lugar" maxlength="40" placeholder="Ej: Parque Escolar UNER, parcela 3" value="${esc(r.lugar || "")}">
+      <label for="wz-especie">Especie</label>
+      <input id="wz-especie" maxlength="40" placeholder="Ej: Acromyrmex lundii" value="${esc(r.especie || "")}">
+      <label for="wz-nota">Nota</label>
+      <input id="wz-nota" maxlength="40" placeholder="Ej: nido 12 · camino norte" value="${esc(r.nota || "")}">
+      <label class="check"><input type="checkbox" id="wz-fecha" ${r.fecha_hora ? "checked" : ""}><span>Fecha y hora en el video</span></label>
+      <label class="check" style="margin-top:0"><input type="checkbox" id="wz-logo" ${r.logo !== false ? "checked" : ""}><span>Hormiga del laboratorio</span></label>
+      <div class="stage" style="aspect-ratio:4/1;background:#6b5a43">
+        <img id="wz-plogo" src="/hormiga_marca.png" alt="" style="position:absolute;right:10px;bottom:8px;height:44%;width:auto;min-height:0">
+        <div id="wz-prev" style="position:absolute;left:10px;bottom:8px;color:#fff;font:700 13px/1.25 system-ui,sans-serif;
+          text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000"></div>
+      </div>
+      <button class="btn wide" id="wz-next" style="margin-top:14px">Siguiente</button>`;
+    const prev = () => {
+      const info = ["wz-lugar", "wz-especie", "wz-nota"].map(i => $(i).value.trim()).filter(Boolean).join("  ·  ");
+      const p2 = x => String(x).padStart(2, "0"), d = new Date();
+      const f = `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}  ${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`;
+      const lines = [info, $("wz-fecha").checked ? f : ""].filter(Boolean);
+      $("wz-plogo").hidden = !$("wz-logo").checked;
+      $("wz-prev").innerHTML = lines.length ? lines.map(esc).join("<br>") : '<span style="opacity:.6;text-shadow:none">(sin texto)</span>';
+    };
+    ["wz-lugar", "wz-especie", "wz-nota", "wz-fecha", "wz-logo"].forEach(i => $(i).addEventListener("input", prev));
+    prev();
+    $("wz-next").onclick = () => act($("wz-next"), async () => {
+      if (!$("wz-lugar").value.trim() && !confirm("No pusiste el lugar. Va a ser difícil saber de dónde es cada video. ¿Seguir igual?")) return;
+      await api("/api/config", {rotulo: {lugar: $("wz-lugar").value, especie: $("wz-especie").value, nota: $("wz-nota").value,
+        fecha_hora: $("wz-fecha").checked, logo: $("wz-logo").checked}});
+      await loadConfig(); wzGo(2);
+    });
+  } else if (WZ.step === 2) {
+    const ch = wzChecks(), block = ch.some(c => c.ok === "bad");
+    const ic = {ok: "✅", warn: "⚠️", bad: "❌"};
+    const focus = document.activeElement && document.activeElement.id;
+    b.innerHTML = `${n}<h3>Revisión automática</h3>
+      <p>El equipo se revisa solo. Esperá a que todo esté en verde.</p>
+      <ul class="checks">${ch.map(c => `<li><span class="ic">${ic[c.ok]}</span><span><b>${c.t}</b><span class="hint">${esc(c.d)}</span></span></li>`).join("")}</ul>
+      ${block ? '<div class="notice bad">Resolvé lo marcado con ❌. Esta lista se actualiza sola.</div>' : ""}
+      <button class="btn wide" id="wz-next" ${block ? "disabled" : ""}>Siguiente</button>
+      <button class="btn alt wide" id="wz-prev">Atrás</button>`;
+    $("wz-next").onclick = () => wzGo(3);
+    $("wz-prev").onclick = () => wzGo(1);
+    if (focus && $(focus)) $(focus).focus();
+  } else if (WZ.step === 3) {
+    b.innerHTML = `${n}<h3>Marcá el camino de las hormigas</h3>
+      ${WZ.zonaOk ? '<div class="notice info">✅ Zona marcada.</div>' : ""}
+      <p>Vas a ver la imagen completa de la cámara. Arrastrá el dedo para dibujar un rectángulo sobre el camino: <b>solo se graba esa zona</b>.</p>
+      <ul class="steps"><li>Dejá un poco de margen a cada lado del camino.</li><li>Si la imagen se ve dada vuelta, tildá "rotar 180°".</li></ul>
+      ${WZ.zonaOk ? '<button class="btn wide" id="wz-next">Siguiente</button>' : ""}
+      <button class="btn ${WZ.zonaOk ? "alt" : ""} wide" id="wz-fr">${WZ.zonaOk ? "Volver a marcar" : "Marcar la zona"}</button>
+      ${WZ.zonaOk ? "" : '<button class="btn alt wide" id="wz-full">Grabar la imagen completa</button>'}
+      <button class="btn alt wide" id="wz-prev">Atrás</button>`;
+    $("wz-fr").onclick = () => { showTab("encuadre"); $("b-fr-start").click(); };
+    if ($("wz-next")) $("wz-next").onclick = () => wzGo(4);
+    if ($("wz-full")) $("wz-full").onclick = () => act($("wz-full"), async () => {
+      await api("/api/zona", {zona: [0, 0, 1, 1]}); await loadConfig(); WZ.zonaOk = true; wzGo(4);
+    });
+    $("wz-prev").onclick = () => wzGo(2);
+  } else if (WZ.step === 4) {
+    const g = CFG.grabacion, ts = outSize(g.zona, g.ancho);
+    const gbDia = g.bitrate_mbps / 8 * 86400 / 1000;
+    const a = ST && ST.grabador && ST.grabador.almacenamiento;
+    const dias = a && a.libre_total_gb ? (a.libre_total_gb / gbDia).toFixed(1) : "–";
+    b.innerHTML = `${n}<h3>Calidad del video</h3>
+      <ul class="checks">
+        <li><span class="ic">🎥</span><span><b>${ts[0]}×${ts[1]} · ${g.fps} cuadros/s</b><span class="hint">tamaño y fluidez</span></span></li>
+        <li><span class="ic">💾</span><span><b>${g.bitrate_mbps} Mbps</b><span class="hint">≈ ${gbDia.toFixed(0)} GB por día como máximo · alcanza para ~${dias} días</span></span></li>
+        <li><span class="ic">✂️</span><span><b>Fragmentos de ${g.segmento_min} min</b><span class="hint">${g.alinear_reloj ? "cortados en horas redondas" : "desde que empieza"}</span></span></li>
+      </ul>
+      <button class="btn wide" id="wz-next">Está bien, seguir</button>
+      <button class="btn alt wide" id="wz-chg">Cambiar calidad</button>
+      <button class="btn alt wide" id="wz-prev">Atrás</button>`;
+    $("wz-next").onclick = () => wzGo(5);
+    $("wz-chg").onclick = () => showTab("video");
+    $("wz-prev").onclick = () => wzGo(3);
+  } else if (WZ.step === 5) {
+    const items = ["La luz está encendida y pareja", "La cámara quedó firme (no se mueve si tocás la caja)", "El camino se ve bien en la imagen de arriba", "Voy a tapar el equipo para que no haya sombras"];
+    b.innerHTML = `${n}<h3>Último control</h3>
+      <p>Así se va a ver el video (antes de tapar):</p>
+      <div class="stage"><img id="wz-live" alt=""></div>
+      <ul class="checks">${items.map((t, i) => `<li><label><input type="checkbox" class="wz-c"> ${t}</label></li>`).join("")}</ul>
+      <button class="btn wide" id="wz-fin" disabled>Listo: ¡a grabar!</button>
+      <button class="btn alt wide" id="wz-prev">Atrás</button>`;
+    refreshImg($("wz-live"), () => TAB === "asist" && WZ.step === 5);
+    const cs = [...document.querySelectorAll(".wz-c")];
+    cs.forEach(c => c.onchange = () => { $("wz-fin").disabled = !cs.every(x => x.checked); });
+    $("wz-prev").onclick = () => wzGo(4);
+    $("wz-fin").onclick = () => act($("wz-fin"), async () => {
+      await api("/api/instalacion", {accion: "confirmar"}); await loadConfig(); await poll(); wzGo(6);
+    });
+  } else {
+    const sitio = (CFG && CFG.rotulo.lugar) || "lugar sin nombre";
+    $("wz-dots").innerHTML = "";
+    b.innerHTML = `<div style="text-align:center"><div style="font-size:60px;line-height:1.1">✅</div>
+      <h3>Instalación lista</h3>
+      <p>Grabando en <b>${esc(sitio)}</b> desde las ${new Date().toLocaleTimeString("es-AR", {hour: "2-digit", minute: "2-digit", hour12: false})} h</p>
+      <p>Ya podés tapar el equipo y desconectarte: sigue grabando solo.</p>
+      <button class="btn wide" id="wz-ok">Ir al estado</button></div>`;
+    $("wz-ok").onclick = () => wzClose();
+  }
+}
+
 /* ---------- arranque ---------- */
 (async function start() {
   api("/api/hora", {ms: Date.now()}).catch(() => {});  // ajustar la hora del equipo con la de este dispositivo
   await loadConfig().catch(() => {});
   await poll();
+  if (ST && ST.instalacion && ST.instalacion.preguntar === "configurar") wzOpen();
   setInterval(poll, 3000);
   setInterval(() => { if (TAB === "sis") loadEvents(); }, 10000);
 })();

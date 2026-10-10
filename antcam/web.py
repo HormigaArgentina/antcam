@@ -134,7 +134,32 @@ def api_status():
         avisos=dict(notifier.info(), configurado=bool(cfg["avisos"]["telegram_token"]
                                                       and cfg["avisos"]["telegram_chat_id"])),
         tamano_salida=config.output_size(cfg),
+        instalacion=instalacion_info(cfg),
     )
+
+
+def instalacion_info(cfg):
+    ins = cfg["instalacion"]
+    if not ins["confirmada"]:
+        preguntar = "configurar"          # nunca se configuró
+    elif ins["boot"] != config.boot_id():
+        preguntar = "nuevo_encendido"     # se encendió y siguió con lo anterior: ¿lugar nuevo?
+    else:
+        preguntar = None
+    return {"lugar": cfg["rotulo"]["lugar"], "confirmada": ins["confirmada"], "preguntar": preguntar}
+
+
+@app.post("/api/instalacion")
+def api_installation():
+    accion = (request.get_json(force=True) or {}).get("accion")
+    if accion == "mismo_lugar":
+        config.update({"instalacion": {"boot": config.boot_id()}})
+        return ok()
+    if accion == "confirmar":
+        cfg = config.update({"instalacion": {"confirmada": time.time(), "boot": config.boot_id()}})
+        events.log("info", f"Instalación nueva lista: {cfg['rotulo']['lugar'] or 'lugar sin nombre'}", SRC)
+        return ok()
+    return fail("acción desconocida")
 
 
 @app.get("/api/eventos")

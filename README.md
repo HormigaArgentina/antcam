@@ -115,13 +115,24 @@ Desde la PC o el celular, en la misma WiFi, abrí **http://antcam-01.local**. Ya
 ## Uso en el campo
 
 1. Conectá los pendrives, la cámara y la luz. Encendé el equipo.
-2. Esperá ~2 minutos. El **LED verde de la placa late como un corazón: está grabando.**
-3. Con el celular, en Ajustes → WiFi, conectate a la red **AntCam-01** (abierta, sin clave). En general la página se abre sola; si no, entrá a **http://10.42.0.1**.
+2. Esperá ~2 minutos. El **LED verde de la placa late como un corazón: ya está grabando**. Graba con la configuración anterior o, la primera vez, con la imagen completa.
+3. Con el celular, en Ajustes → WiFi, conectate a la red **AntCam-XXXX** (abierta, sin clave). En general la página se abre sola; si no, entrá a **http://10.42.0.1**.
    - Si no abre, **apagá los datos móviles** del celular un momento.
-4. Al abrir la página, **la hora del equipo se ajusta con la del celular**.
-5. En **Encuadre**: tocá *Empezar a encuadrar*, arrastrá el dedo sobre el camino y tocá *Guardar y grabar*.
-6. En **Estado** tiene que decir **Grabando** en verde. Tocá *Ver cámara* para ver lo que se graba.
-7. Tapá el equipo y listo. Te podés desconectar: sigue grabando.
+4. La página te dice qué hacer:
+   - **Primera vez:** se abre solo el **asistente de instalación**.
+   - **Ya configurado antes:** pregunta *"¿Lo instalaste en un lugar nuevo?"*.
+     - Lugar nuevo → **Sí** y seguí el asistente.
+     - Solo fuiste a revisar → **No, es el mismo lugar**.
+   - Para empezarlo en cualquier momento: botón **Nueva instalación**.
+5. **El asistente tiene 5 pasos (unos 2 minutos):**
+   1. **Lugar y marca en el video:** lugar, especie, nota, fecha y hora, y la hormiga del laboratorio, con una vista previa. Se imprime en el video y se guarda en `indice.csv`.
+   2. **Revisión automática:** cámara, pendrive, hora y alimentación. No deja seguir si falta algo importante.
+   3. **Encuadre:** dibujás con el dedo el rectángulo del camino.
+   4. **Calidad:** muestra el tamaño, la calidad y cuántos días alcanza el pendrive.
+   5. **Último control:** muestra la imagen tal como se graba y una lista para tildar: luz, cámara firme, camino visible y equipo tapado.
+6. Al terminar dice **Instalación lista**. Tapá el equipo y te podés desconectar: sigue grabando.
+
+La hora del equipo se ajusta sola con la del celular cada vez que abrís la página.
 
 ### Retirar los videos
 

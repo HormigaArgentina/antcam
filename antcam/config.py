@@ -47,6 +47,10 @@ DEFAULTS = {
     "acceso": {
         "clave": "",               # si se completa, la página pide usuario "antcam" y esta clave
     },
+    "instalacion": {
+        "confirmada": 0,           # cuándo se terminó el asistente de instalación (0 = nunca)
+        "boot": "",                # encendido en el que se confirmó o se dijo "es el mismo lugar"
+    },
     "leds_externos": True,         # LEDs del equipo anterior: verde GPIO22, amarillo GPIO27, rojo GPIO14
 }
 
@@ -161,8 +165,25 @@ def validate(cfg):
     av["foto"] = bool(av.get("foto"))
 
     cfg["acceso"]["clave"] = str(cfg["acceso"].get("clave") or "")
+    ins = cfg["instalacion"]
+    try:
+        ins["confirmada"] = float(ins.get("confirmada") or 0)
+    except (TypeError, ValueError):
+        ins["confirmada"] = 0
+    ins["boot"] = str(ins.get("boot") or "")
     cfg["leds_externos"] = bool(cfg.get("leds_externos"))
     return cfg
+
+
+def boot_id():
+    """Identifica cada encendido de la Pi (cambia en cada arranque)."""
+    if paths.SIM:
+        return os.environ.get("ANTCAM_BOOT", "sim")
+    try:
+        with open("/proc/sys/kernel/random/boot_id") as f:
+            return f.read().strip()
+    except OSError:
+        return ""
 
 
 def output_size(cfg, sensor_w=3280, sensor_h=2464):
